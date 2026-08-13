@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-brand-bg text-white font-sans antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-brand-surface backdrop-blur-xl border border-brand-border;
+  }
+  .glass-panel {
+    @apply glass rounded-2xl;
+  }
+  .btn-primary {
+    @apply px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-primary to-brand-accent text-white font-medium shadow-lg shadow-brand-primary/20 hover:shadow-brand-primary/40 transition-all duration-300 active:scale-95;
+  }
+  .btn-secondary {
+    @apply px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/90 font-medium hover:bg-white/10 transition-all duration-300 active:scale-95;
+  }
+  .input-field {
+    @apply w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-brand-primary/50 focus:ring-1 focus:ring-brand-primary/30 transition-all;
+  }
+}

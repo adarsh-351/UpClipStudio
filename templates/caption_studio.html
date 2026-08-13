@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Caption Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" crossorigin href="/static/caption-studio/assets/index-BsUBBpfo.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #0a0a0f; }
+    #root { min-height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script>
+    window.__UPCLIP_INITIAL_STATE__ = {
+      project_id: {{ project_id or '' }},
+      source_filename: {{ source_filename or '' }},
+      inherited_style: {{ inherited_style | tojson if inherited_style else 'null' }},
+      caption_files: {{ caption_files | tojson if caption_files else '[]' }},
+    };
+    {% if preload_video %}
+    (function() {
+      var videoData = {{ preload_video | tojson }};
+      try {
+        window.history.replaceState({ video: videoData, project_id: window.__UPCLIP_INITIAL_STATE__.project_id, src: videoData.filename }, "");
+        setTimeout(function() {
+          window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state }));
+        }, 100);
+      } catch (e) {}
+    })();
+    {% endif %}
+    {% if preload %}
+    window.__CAPTION_STUDIO_PRELOAD__ = {{ preload | tojson }};
+    {% endif %}
+  </script>
+  <script type="module" crossorigin src="/static/caption-studio/assets/index-Cz4KrDf4.js"></script>
+</body>
+</html>

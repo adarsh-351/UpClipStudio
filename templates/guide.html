@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How to Use AI Spark Studio — UpClip Studio</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<header class="navbar">
+    <div class="navbar-inner">
+        <div class="brand">
+            <div class="brand-icon">🎬</div>
+            <div>
+                <h1>UpClip Studio</h1>
+                <p>Download • Clip • Grow</p>
+            </div>
+        </div>
+        <div class="nav-links">
+            <a href="/" class="nav-action">Home</a>
+            {% if current_user %}
+                <a href="/dashboard" class="btn btn-primary btn-sm-nav">Launch Studio →</a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-sm-nav">Sign In</a>
+            {% endif %}
+        </div>
+        <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+    </div>
+</header>
+
+<main class="container guide-container">
+    <div class="guide-header">
+        <h2>How to Use AI Spark Studio</h2>
+        <p>Follow these simple steps to transform any video into viral shorts.</p>
+    </div>
+
+    <!-- Progress Indicator -->
+    <div class="guide-progress">
+        <div class="guide-progress-bar">
+            <div class="guide-progress-fill" id="guideProgressFill"></div>
+        </div>
+        <div class="guide-progress-text" id="guideProgressText">Step 1 of 10</div>
+    </div>
+
+    <!-- Step Cards -->
+    <div class="guide-steps" id="guideSteps">
+        <div class="guide-step active" data-step="1">
+            <div class="guide-step-icon">🔐</div>
+            <div class="guide-step-content">
+                <h3>Sign In</h3>
+                <p>Create a free account or sign in to access the Studio. Your session is preserved while you work.</p>
+            </div>
+        </div>
+        <div class="guide-step" data-step="2">
+            <div class="guide-step-icon">📤</div>
+            <div class="guide-step-content">
+                <h3>Upload Video</h3>
+                <p>Drag and drop or browse to upload any video file. We support MP4, MOV, AVI, and more. Large files are supported with a friendly warning.</p>
+            </div>
+        </div>
+        <div class="guide-step" data-step="3">
+            <div class="guide-step-icon">🧠</div>
+            <div class="guide-step-content">
+                <h3>Video Analysis</h3>
+                <p>AI analyzes your video to understand content, extract frames, and prepare for intelligent scene detection.</p>
+            </div>
+        </div>
+        <div class="guide-step" data-step="4">
+            <div class="guide-step-icon">🎬</div>
+            <div class="guide-step-content">
+                <h3>Scene Selection</h3>
+                <p>AI automatically detects the best scenes and moments. Review the generated clips and select the ones you want to keep.</p>
+            </div>
+        </div>
+        <div class="guide-step" data-step="5">
+            <div class="guide-step-icon">✂️</div>
+            <div class="guide-step-content">
+                <h3>Optional Framing</h3>
+                <p>Choose whether to apply smart reframing for aspect ratio changes. Skip it for faster processing if you prefer the original framing.</p>
+            </div>
+        </div>
+        <div class="guide-step" data-step="6">
+            <div class="guide-step-icon">⚡</div>
+            <div class="guide-step-content">
+                <h3>Generate Clips</h3>
+                <p>AI generates perfect clips from your selected scenes. You can choose AI-decided clips or set your own duration and count.</p>
+            </div>
+        </div>
+        <div class="guide-step" data-step="7">
+            <div class="guide-step-icon">💬</div>
+            <div class="guide-step-content">
+                <h3>Animated Captions</h3>
+                <p>Add stunning animated captions to your clips. Choose from multiple templates and animation styles to match your brand.</p>
+            </div>
+        </div>
+        <div class="guide-step" data-step="8">
+            <div class="guide-step-icon">🎨</div>
+            <div class="guide-step-content">
+                <h3>Customize</h3>
+                <p>Fine-tune your captions with professional fonts, colors, positions, and animations. Preview changes in real-time before exporting.</p>
+            </div>
+        </div>
+        <div class="guide-step" data-step="9">
+            <div class="guide-step-icon">👁️</div>
+            <div class="guide-step-content">
+                <h3>Preview</h3>
+                <p>Watch your final clips with captions burned in. Review everything before downloading to make sure it's perfect.</p>
+            </div>
+        </div>
+        <div class="guide-step" data-step="10">
+            <div class="guide-step-icon">⬇️</div>
+            <div class="guide-step-content">
+                <h3>Download</h3>
+                <p>Download individual clips or grab everything as a ZIP. Export in your preferred quality and share instantly.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="guide-nav">
+        <button class="btn btn-secondary" id="guidePrev" hidden>← Previous</button>
+        <button class="btn btn-primary" id="guideNext">Next →</button>
+        <a href="/dashboard" class="btn btn-primary" id="guideStart" hidden>Start Creating →</a>
+        <button class="btn btn-secondary" id="guideSkip">Skip Guide</button>
+    </div>
+</main>
+
+<footer class="footer">
+    <p>© 2026 UpClip Studio. Built for creators.</p>
+</footer>
+
+<script>
+    // ============================================
+    // User Guide Navigation
+    // ============================================
+    const guideSteps = document.querySelectorAll('.guide-step');
+    const guidePrev = document.getElementById('guidePrev');
+    const guideNext = document.getElementById('guideNext');
+    const guideStart = document.getElementById('guideStart');
+    const guideSkip = document.getElementById('guideSkip');
+    const guideProgressFill = document.getElementById('guideProgressFill');
+    const guideProgressText = document.getElementById('guideProgressText');
+
+    let currentGuideStep = 1;
+    const totalGuideSteps = guideSteps.length;
+
+    function updateGuideProgress() {
+        const percent = Math.round((currentGuideStep / totalGuideSteps) * 100);
+        guideProgressFill.style.width = `${percent}%`;
+        guideProgressText.textContent = `Step ${currentGuideStep} of ${totalGuideSteps}`;
+    }
+
+    function showGuideStep(step) {
+        currentGuideStep = step;
+        guideSteps.forEach((el, idx) => {
+            el.classList.remove('active');
+            if (idx + 1 === step) el.classList.add('active');
+        });
+
+        guidePrev.hidden = step === 1;
+        guideNext.hidden = step === totalGuideSteps;
+        guideStart.hidden = step !== totalGuideSteps;
+
+        updateGuideProgress();
+    }
+
+    guideNext.addEventListener('click', () => {
+        if (currentGuideStep < totalGuideSteps) {
+            showGuideStep(currentGuideStep + 1);
+        }
+    });
+
+    guidePrev.addEventListener('click', () => {
+        if (currentGuideStep > 1) {
+            showGuideStep(currentGuideStep - 1);
+        }
+    });
+
+    guideSkip.addEventListener('click', () => {
+        window.location.href = '/';
+    });
+
+    updateGuideProgress();
+</script>
+</body>
+</html>

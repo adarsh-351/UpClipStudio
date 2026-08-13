@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Shorts Studio</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<!-- Header -->
+    <header class="navbar">
+        <div class="navbar-inner">
+            <div class="brand">
+                <div class="brand-icon">🎬</div>
+                <div>
+                    <h1>UpClip Studio</h1>
+                    <p>Download • Clip • Grow</p>
+                </div>
+            </div>
+<div class="nav-links">
+                <span class="ffmpeg-badge" id="ffmpegBadge">Checking FFmpeg...</span>
+                <button class="jobs-indicator" id="jobsIndicator" hidden title="Active background tasks">
+                    <span class="jobs-dot"></span>
+                    <span id="jobsCount">0 tasks</span>
+                </button>
+                <div class="jobs-popup" id="jobsPopup" hidden>
+                    <div class="jobs-popup-header">Active Tasks</div>
+                    <div id="jobsList" class="jobs-popup-list"></div>
+                </div>
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">🌙</button>
+                <a href="/" class="btn btn-secondary btn-sm-nav">Home</a>
+                {% if current_user %}
+                    <div class="account-menu">
+                        <button class="account-btn" id="accountBtn">
+                            <span class="account-avatar">{{ current_user['username'][0]|upper }}</span>
+                            <span class="account-name">{{ current_user['username'] }}</span>
+                            <span class="account-caret">▾</span>
+                        </button>
+                        <div class="account-dropdown" id="accountDropdown" hidden>
+                            <div class="dropdown-header">
+                                <strong>{{ current_user['username'] }}</strong>
+                                <span>{{ current_user['email'] }}</span>
+                            </div>
+                            <a href="{{ url_for('home.youtube_desk') }}" class="dropdown-item">📺 YouTube Desk</a>
+                            <button class="dropdown-item" id="logoutBtn">Sign Out</button>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+        </div>
+        <!-- Mobile menu -->
+        <div class="mobile-menu" id="mobileMenu" hidden>
+            <a href="/" class="mobile-link">Home</a>
+            <a href="{{ url_for('home.youtube_desk') }}" class="mobile-link">📺 YouTube Desk</a>
+            {% if current_user %}
+                <div class="mobile-user">
+                    <span class="account-avatar">{{ current_user['username'][0]|upper }}</span>
+                    {{ current_user['username'] }}
+                </div>
+                <button class="mobile-link" id="logoutBtnMobile">Sign Out</button>
+            {% endif %}
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Studio Loader -->
+        <div class="studio-loader-overlay" id="studioLoader" hidden>
+            <div class="studio-loader-content">
+                <div class="spinner large"></div>
+                <p class="studio-loader-text">Loading your Studio…</p>
+            </div>
+        </div>
+
+        <!-- Breadcrumb Navigation -->
+        <nav class="breadcrumb-nav" id="breadcrumbNav">
+            <a href="/" class="breadcrumb-link">Home</a>
+            <span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">AI Shorts Studio</span>
+        </nav>
+
+        <!-- Hero -->
+        <section class="hero">
+            <h2>Create Viral Shorts with AI</h2>
+            <p>Upload a video, configure language, aspect ratio, clipping, and naming — then let AI generate the perfect clips.</p>
+        </section>
+
+        <!-- Caption Style Preset (applied before clipping) -->
+        <section class="card caption-style-section" id="captionStyleSection">
+            <h3 class="card-title">🎨 Caption Style (Optional)</h3>
+            <p class="wiz-desc">Choose a caption style that will be applied to all generated clips. You can edit it later in Caption Studio.</p>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Caption Style Preset</label>
+                    <select id="captionStylePreset">
+                        <option value="">None (default)</option>
+                        <option value="tiktok_pop">TikTok Pop</option>
+                        <option value="youtube">YouTube</option>
+                        <option value="minimal">Minimal</option>
+                        <option value="bold">Bold</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Font Size</label>
+                    <input type="number" id="presetCaptionSize" min="10" max="120" value="34">
+                </div>
+                <div class="form-group">
+                    <label>Position</label>
+                    <select id="presetCaptionPosition">
+                        <option value="bottom">Bottom</option>
+                        <option value="top">Top</option>
+                        <option value="middle">Center</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Wizard -->
+        <section class="wizard card" id="wizard">
+<!-- Stepper -->
+            <div class="wizard-steps">
+                <div class="wiz-step active" data-wiz="1"><div class="wiz-num">1</div><span>Upload</span></div>
+                <div class="wiz-step" data-wiz="2"><div class="wiz-num">2</div><span>Language</span></div>
+                <div class="wiz-step" data-wiz="3"><div class="wiz-num">3</div><span>Aspect</span></div>
+                <div class="wiz-step" data-wiz="4"><div class="wiz-num">4</div><span>Clipping</span></div>
+                <div class="wiz-step" data-wiz="5"><div class="wiz-num">5</div><span>Naming</span></div>
+                <div class="wiz-step" data-wiz="6"><div class="wiz-num">6</div><span>Captions</span></div>
+                <div class="wiz-step" data-wiz="7"><div class="wiz-num">7</div><span>Generate</span></div>
+                <div class="wiz-step" data-wiz="8"><div class="wiz-num">8</div><span>Review</span></div>
+                <div class="wiz-step" data-wiz="9"><div class="wiz-num">9</div><span>Export</span></div>
+            </div>
+
+            <!-- STEP 1: UPLOAD -->
+            <div class="wiz-panel active" data-panel="1">
+                <h3 class="wiz-title">📤 Upload Video</h3>
+                <div class="upload-card" id="uploadZone">
+                    <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <p class="upload-title">Drag & drop your video here</p>
+                    <p class="upload-sub">or click to browse (MP4, MOV, AVI)</p>
+                    <input type="file" id="videoInput" accept="video/*" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;">
+                    <button class="btn btn-primary" id="browseBtn">Browse Files</button>
+                </div>
+                <div class="upload-progress" id="uploadProgress" hidden>
+                    <div class="progress-bar"><div class="progress-fill" id="uploadFill"></div></div>
+                    <p id="uploadStatus">Uploading...</p>
+                </div>
+                <div class="meta-preview" id="metaPreview" hidden></div>
+            </div>
+
+            <!-- STEP 2: LANGUAGE -->
+            <div class="wiz-panel" data-panel="2">
+                <h3 class="wiz-title">🌐 Language</h3>
+                <p class="wiz-desc">Choose transcript & subtitle language. AI recommends Auto Detect.</p>
+                <div class="form-group">
+                    <label>Transcript Language</label>
+                    <select id="langTranscript">
+                        <option value="auto">🔍 Auto Detect</option>
+                        <option value="en">English</option>
+                        <option value="hi">Hindi</option>
+                        <option value="hinglish">Hinglish (Hindi)</option>
+                        <option value="bn">Bengali</option>
+                        <option value="ta">Tamil</option>
+                        <option value="te">Telugu</option>
+                        <option value="mr">Marathi</option>
+                        <option value="ur">Urdu</option>
+                        <option value="gu">Gujarati</option>
+                        <option value="kn">Kannada</option>
+                        <option value="ml">Malayalam</option>
+                        <option value="pa">Punjabi</option>
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                        <option value="it">Italian</option>
+                        <option value="pt">Portuguese</option>
+                        <option value="ar">Arabic</option>
+                        <option value="ja">Japanese</option>
+                        <option value="ko">Korean</option>
+                        <option value="zh">Chinese</option>
+                        <option value="ru">Russian</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Subtitle Language (translation)</label>
+                    <select id="langSubtitle">
+                        <option value="auto">Same as transcript</option>
+                        <option value="en">English</option>
+                        <option value="hi">Hindi</option>
+                        <option value="hinglish">Hinglish (Hindi)</option>
+                        <option value="bn">Bengali</option>
+                        <option value="ta">Tamil</option>
+                        <option value="te">Telugu</option>
+                        <option value="mr">Marathi</option>
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                        <option value="ar">Arabic</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="subtitleEnabled" checked> Burn subtitles into final video
+                    </label>
+                </div>
+            </div>
+
+            <!-- STEP 3: ASPECT RATIO -->
+            <div class="wiz-panel" data-panel="3">
+                <h3 class="wiz-title">📐 Aspect Ratio</h3>
+                <p class="wiz-desc">Choose the output format. AI uses smart cropping — no stretching.</p>
+                <div class="option-grid">
+                    <label class="option-card">
+                        <input type="radio" name="aspect" value="9:16">
+                        <div class="ratio-box r-916"></div>
+                        <div class="option-label">9:16</div>
+                        <div class="option-sub">Shorts / Reels</div>
+                    </label>
+                    <label class="option-card">
+                        <input type="radio" name="aspect" value="16:9">
+                        <div class="ratio-box r-169"></div>
+                        <div class="option-label">16:9</div>
+                        <div class="option-sub">YouTube / Landscape</div>
+                    </label>
+                    <label class="option-card">
+                        <input type="radio" name="aspect" value="1:1">
+                        <div class="ratio-box r-11"></div>
+                        <div class="option-label">1:1</div>
+                        <div class="option-sub">Square</div>
+                    </label>
+                    <label class="option-card">
+                        <input type="radio" name="aspect" value="original" checked>
+                        <div class="ratio-box r-orig"></div>
+                        <div class="option-label">Original</div>
+                        <div class="option-sub">Keep source ratio</div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- STEP 4: CLIPPING -->
+            <div class="wiz-panel" data-panel="4">
+                <h3 class="wiz-title">✂️ Clipping Options</h3>
+                <p class="wiz-desc">Who should decide the clipping?</p>
+                <div class="option-grid vertical">
+                    <label class="option-card">
+                        <input type="radio" name="clipmode" value="ai" checked>
+                        <div class="option-label">🤖 AI decides</div>
+                        <div class="option-sub">AI finds the best moments, duration & count automatically.</div>
+                    </label>
+                    <label class="option-card">
+                        <input type="radio" name="clipmode" value="duration">
+                        <div class="option-label">⏱️ I decide clip duration</div>
+                        <div class="option-sub">Set how many seconds each clip should be.</div>
+                    </label>
+                    <label class="option-card">
+                        <input type="radio" name="clipmode" value="count">
+                        <div class="option-label">🔢 I decide number of clips</div>
+                        <div class="option-sub">Set how many clips you want. AI adjusts durations.</div>
+                    </label>
+                </div>
+
+                <!-- Duration settings -->
+                <div id="durationSettings" class="conditional" hidden>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Clip Duration (seconds)</label>
+                            <input type="number" id="clipDuration" min="5" max="300" value="30">
+                        </div>
+                        <div class="form-group">
+                            <label>How many clips?</label>
+                            <select id="clipCountMode">
+                                <option value="all">All possible clips</option>
+                                <option value="custom">Custom number</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" id="customCountWrap" hidden>
+                        <label>Number of clips</label>
+                        <input type="number" id="customCount" min="1" max="100" value="5">
+                    </div>
+                </div>
+
+                <!-- Count settings -->
+                <div id="countSettings" class="conditional" hidden>
+                    <div class="form-group">
+                        <label>How many clips do you want?</label>
+                        <input type="number" id="clipCount" min="1" max="100" value="5">
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 5: NAMING -->
+            <div class="wiz-panel" data-panel="5">
+                <h3 class="wiz-title">🏷️ Clip Naming</h3>
+                <p class="wiz-desc">How should clips be named?</p>
+                <div class="option-grid vertical">
+                    <label class="option-card">
+                        <input type="radio" name="naming" value="content">
+                        <div class="option-label">📝 Content-based names</div>
+                        <div class="option-sub">e.g. AI_Video_Editing_Tips.mp4</div>
+                    </label>
+                    <label class="option-card">
+                        <input type="radio" name="naming" value="sequential" checked>
+                        <div class="option-label">🔢 Sequential names</div>
+                        <div class="option-sub">e.g. clip_001.mp4, clip_002.mp4</div>
+                    </label>
+                </div>
+            </div>
+
+<!-- STEP 6: CAPTIONS -->
+            <div class="wiz-panel" data-panel="6">
+                <h3 class="wiz-title">💬 Animated Captions</h3>
+                <p class="wiz-desc">Add short-form animated captions (word-by-word karaoke) to a separate video render.</p>
+
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="captionEnabled"> Enable animated captions
+                    </label>
+                    <p class="quality-hint">Burns word-by-word animated captions into a separate caption video.</p>
+                </div>
+
+                <div id="captionOptions" class="caption-options" hidden>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Template</label>
+                            <select id="captionTemplate">
+                                <option value="viral">Trending Viral</option>
+                                <option value="social">Social Reel</option>
+                                <option value="creator">Creator Glow</option>
+                                <option value="dynamic">Dynamic Punch</option>
+                                <option value="bold">Bold</option>
+                                <option value="minimal">Minimal</option>
+                                <option value="highlight">Highlight</option>
+                                <option value="karaoke">Karaoke</option>
+                                <option value="modern">Modern</option>
+                                <option value="clean">Clean</option>
+                                <option value="classic">Classic</option>
+                                <option value="word_by_word">Word-by-Word</option>
+                                <option value="pop">Pop</option>
+                                <option value="bounce">Bounce</option>
+                                <option value="typewriter">Typewriter</option>
+                                <option value="emphasis">Emphasis</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Animation Style</label>
+                            <select id="captionAnimation">
+                                <option value="pop">Pop</option>
+                                <option value="fade">Fade</option>
+                                <option value="bounce">Bounce</option>
+                                <option value="slide">Slide</option>
+                                <option value="zoom">Zoom</option>
+                                <option value="scale">Scale</option>
+                                <option value="typewriter">Typewriter</option>
+                                <option value="highlight">Highlight</option>
+                                <option value="karaoke">Karaoke</option>
+                                <option value="punch">Punch</option>
+                                <option value="smooth_reveal">Smooth Reveal</option>
+                                <option value="word_by_word">Word-by-Word</option>
+                                <option value="character_by_character">Character-by-Character</option>
+                                <option value="none">None</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Font</label>
+                            <select id="captionFont">
+                                <option value="Arial">Arial</option>
+                                <option value="Arial Black">Arial Black</option>
+                                <option value="Inter">Inter</option>
+                                <option value="Roboto">Roboto</option>
+                                <option value="Poppins">Poppins</option>
+                                <option value="Montserrat">Montserrat</option>
+                                <option value="Anton">Anton</option>
+                                <option value="Bebas Neue">Bebas Neue</option>
+                                <option value="Oswald">Oswald</option>
+                                <option value="Space Grotesk">Space Grotesk</option>
+                                <option value="Outfit">Outfit</option>
+                                <option value="Manrope">Manrope</option>
+                                <option value="DM Sans">DM Sans</option>
+                                <option value="Archivo">Archivo</option>
+                                <option value="Plus Jakarta Sans">Plus Jakarta Sans</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Font Size</label>
+                            <input type="number" id="captionSize" min="10" max="120" value="34">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Text Color</label>
+                            <input type="color" id="captionColor" value="#FFFFFF">
+                        </div>
+                        <div class="form-group">
+                            <label>Background / Outline</label>
+                            <input type="color" id="captionBackground" value="#000000">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Outline Width</label>
+                            <input type="number" id="captionOutline" min="0" max="10" value="3">
+                        </div>
+                        <div class="form-group">
+                            <label>Position</label>
+                            <select id="captionPosition">
+                                <option value="bottom">Bottom</option>
+                                <option value="top">Top</option>
+                                <option value="middle">Middle</option>
+                                <option value="safe_bottom">Safe Bottom</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 7: GENERATE -->
+            <div class="wiz-panel" data-panel="7">
+                <h3 class="wiz-title">🚀 Generate Clips</h3>
+                <p class="wiz-desc">Review your settings, then start the AI pipeline.</p>
+
+                <div class="summary-card" id="settingsSummary"></div>
+
+<div class="pipeline-progress-wrap" id="pipelineWrap" hidden>
+                    <div class="pipeline-progress-bar">
+                        <div class="pipeline-progress-fill" id="pipelineFill"></div>
+                    </div>
+                    <div class="pipeline-percent" id="pipelinePercent">0%</div>
+                    <div class="pipeline-timer" id="pipelineTimerWrap">
+                        <span class="timer-label">⏱</span>
+                        <span id="pipelineTimer">0:00</span>
+                    </div>
+                </div>
+
+                <div class="steps" id="stepsContainer">
+                    <div class="step" data-step="1"><div class="step-num">1</div><span>FFmpeg</span></div>
+                    <div class="step" data-step="2"><div class="step-num">2</div><span>Load</span></div>
+                    <div class="step" data-step="3"><div class="step-num">3</div><span>Frames</span></div>
+                    <div class="step" data-step="4"><div class="step-num">4</div><span>Scenes</span></div>
+                    <div class="step" data-step="5"><div class="step-num">5</div><span>Merge</span></div>
+                    <div class="step" data-step="6"><div class="step-num">6</div><span>Clips</span></div>
+                    <div class="step" data-step="7"><div class="step-num">7</div><span>Whisper</span></div>
+                    <div class="step" data-step="8"><div class="step-num">8</div><span>Subs</span></div>
+                    <div class="step" data-step="9"><div class="step-num">9</div><span>Render</span></div>
+                </div>
+
+                <div class="log-container">
+                    <div class="log-header">Pipeline Log</div>
+                    <div class="log-body" id="logBody">
+                        <div class="log-line muted">Waiting for pipeline to start...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 8: REVIEW -->
+            <div class="wiz-panel" data-panel="8">
+                <h3 class="wiz-title">👀 Review Clips</h3>
+                <p class="wiz-desc">Preview, rename, or delete each finished clip before export. These are generated clips only — the original source video is not shown here.</p>
+                <div class="clips-grid" id="reviewGrid"></div>
+                <div id="countConflict" class="conflict-banner" hidden></div>
+            </div>
+
+<!-- STEP 9: EXPORT -->
+            <div class="wiz-panel" data-panel="9">
+                <h3 class="wiz-title">📦 Export</h3>
+                <p class="wiz-desc">Download your final edited clips and export the selected quality.</p>
+
+                <!-- Quality Control + Download All -->
+                <div class="card quality-card">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Export Quality</label>
+                            <select id="exportQuality">
+                                <option value="original">Original</option>
+                                <option value="360p">360p</option>
+                                <option value="720p">720p</option>
+                                <option value="1080p">1080p</option>
+                            </select>
+                            <p class="quality-hint">Applies to each finished clip export.</p>
+                        </div>
+                        <div class="form-group">
+                            <label>Actions</label>
+                            <div class="quality-actions">
+                                <button class="btn btn-download" id="downloadAllBtn">⬇ Download All Clips (ZIP)</button>
+                                <button class="btn btn-download" id="exportQualityBtn">⬇ Export Selected Quality</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Downloads -->
+                <div class="grid-2 export-row">
+                    <div class="card">
+                        <h3 class="card-title">📄 Subtitle Files</h3>
+                        <div class="download-list" id="subtitleList"></div>
+                    </div>
+                    <div class="card">
+                        <h3 class="card-title">📝 Transcript</h3>
+                        <div class="download-list" id="transcriptList"></div>
+                    </div>
+                </div>
+
+                <!-- Transcript Viewer -->
+                <div class="card">
+                    <h3 class="card-title">🗒️ Transcript Preview</h3>
+                    <div class="transcript-view" id="transcriptView"></div>
+                </div>
+            </div>
+
+            <!-- Wizard Nav Buttons -->
+            <div class="wizard-nav">
+                <button class="btn btn-secondary" id="wizPrev" hidden>← Back</button>
+                <button class="btn btn-primary" id="wizNext">Continue →</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Confirmation Modal -->
+<div class="modal-overlay" id="confirmModal" hidden>
+        <div class="modal">
+            <button class="modal-close" id="confirmClose" aria-label="Close">✕</button>
+            <h3>Clip Count Adjustment</h3>
+            <p id="confirmText">...</p>
+            <div class="modal-actions">
+                <button class="btn btn-primary" id="confirmYes">Yes, Continue</button>
+                <button class="btn btn-secondary" id="confirmNo">No, Change Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Required Modal -->
+<div class="modal-overlay" id="authRequiredModal" hidden>
+        <div class="modal auth-modal">
+            <button class="modal-close" id="authRequiredClose" aria-label="Close">✕</button>
+            <div class="auth-modal-icon">🔒</div>
+            <h3>Sign In Required</h3>
+            <p>Please sign in to access AI Spark Studio and start creating viral shorts.</p>
+            <div class="modal-actions">
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-block">Sign In</a>
+                <a href="/" class="btn btn-secondary btn-block">Back to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Large File Warning Modal -->
+<div class="modal-overlay" id="largeFileModal" hidden>
+        <div class="modal large-file-modal">
+            <button class="modal-close" id="largeFileClose" aria-label="Close">✕</button>
+            <div class="large-file-icon">⚠️</div>
+            <h3>Large Video Detected</h3>
+            <p id="largeFileMessage">This video is quite large. Analysis, scene detection, framing, and clip generation may take longer than usual.</p>
+            <div class="modal-actions">
+                <button class="btn btn-primary" id="largeFileContinue">Continue Anyway</button>
+                <button class="btn btn-secondary" id="largeFileCancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% if auth_required %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var modal = document.getElementById('authRequiredModal');
+            if (modal) modal.hidden = false;
+        });
+    </script>
+    {% endif %}
+</body>
+</html>

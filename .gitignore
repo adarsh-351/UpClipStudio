@@ -1,0 +1,40 @@
+# Virtual Environment
+venv/
+.venv/
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# VS Code
+.vscode/
+
+# Logs
+logs/
+
+# User data (contains password hashes)
+data/
+
+# Output Files
+output/
+
+# Input Videos
+input/*.mp4
+input/*.mov
+input/*.mkv
+
+# Downloaded AI model weights
+models/
+
+# Assets large binaries
+assets/intro/
+assets/outro/
+assets/music/
+
+# OS Files
+.DS_Store
+Thumbs.db
+oauth_client_secrets.json
+oauth_client_secrets.json

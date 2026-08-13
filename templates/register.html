@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account — UpClip Studio</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="auth-body">
+    <div class="auth-shell">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <div class="brand-icon">🎬</div>
+            </div>
+            <h1 class="auth-title">Create your account</h1>
+            <p class="auth-sub">Start generating viral shorts in minutes</p>
+
+            <div id="authError" class="auth-error" hidden></div>
+
+            <form id="registerForm" class="auth-form" autocomplete="off">
+                <div class="auth-field">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Choose a username" required>
+                </div>
+                <div class="auth-field">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="you@example.com" required>
+                </div>
+                <div class="auth-field">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="At least 6 characters" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
+                    <span class="spinner" hidden></span> Create Account
+                </button>
+            </form>
+
+            <p class="auth-alt">Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a></p>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('registerForm');
+        const errorBox = document.getElementById('authError');
+        const btn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorBox.hidden = true;
+            btn.disabled = true;
+            btn.querySelector('.spinner').hidden = false;
+
+            const body = {
+                username: document.getElementById('username').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                password: document.getElementById('password').value,
+            };
+
+            try {
+                const res = await fetch('/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                });
+                const data = await res.json();
+                if (data.success) {
+                    window.location.href = '/dashboard';
+                } else {
+                    errorBox.textContent = data.error || 'Registration failed';
+                    errorBox.hidden = false;
+                }
+            } catch (err) {
+                errorBox.textContent = 'Network error: ' + err.message;
+                errorBox.hidden = false;
+            } finally {
+                btn.disabled = false;
+                btn.querySelector('.spinner').hidden = true;
+            }
+        });
+    </script>
+</body>
+</html>
