@@ -37,7 +37,7 @@
             margin-bottom: 40px;
         }
         .hub-card {
-            background: var(--card);
+            background: rgba(26, 34, 51, 0.6);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 24px;
@@ -45,6 +45,11 @@
             text-decoration: none;
             color: var(--text);
             display: block;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        :root[data-theme="light"] .hub-card {
+            background: rgba(255, 255, 255, 0.65);
         }
         .hub-card:hover {
             border-color: var(--primary);

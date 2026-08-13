@@ -12,6 +12,16 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Inter', sans-serif; background: #0a0a0f; }
     #root { min-height: 100vh; }
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -27,6 +37,11 @@
     (function() {
       var videoData = {{ preload_video | tojson }};
       try {
+        // Populate __CAPTION_STUDIO_PRELOAD__ so the React PreloadRouter can pick it up
+        window.__CAPTION_STUDIO_PRELOAD__ = {
+          video: videoData.filename,
+          project_id: window.__UPCLIP_INITIAL_STATE__.project_id || "",
+        };
         window.history.replaceState({ video: videoData, project_id: window.__UPCLIP_INITIAL_STATE__.project_id, src: videoData.filename }, "");
         setTimeout(function() {
           window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state }));

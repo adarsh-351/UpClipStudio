@@ -15,6 +15,7 @@ function PreloadRouter() {
   const location = useLocation();
 
   useEffect(() => {
+    // First check __CAPTION_STUDIO_PRELOAD__ (set by /studio/open-in-caption-studio bridge)
     const preload = (window as any).__CAPTION_STUDIO_PRELOAD__;
     if (preload && location.pathname === "/" && !location.state?.video) {
       const videoFilename = preload.video || preload.clip || "";
@@ -34,6 +35,31 @@ function PreloadRouter() {
             preload_srt: preload.srt || "",
             preload_vtt: preload.vtt || "",
             preload_style: preload.style || null,
+          },
+          replace: true,
+        });
+      }
+      return;
+    }
+
+    // Also check __UPCLIP_INITIAL_STATE__ (set by caption_studio.html template via ?src= or ?video=)
+    const initState = (window as any).__UPCLIP_INITIAL_STATE__;
+    if (initState && location.pathname === "/" && !location.state?.video && !preload) {
+      const preloadVideo = initState.preload_video;
+      if (preloadVideo) {
+        const src = initState.source_filename || "";
+        const projectId = initState.project_id || "";
+        const inheritedStyle = initState.inherited_style;
+        navigate("/editor", {
+          state: {
+            video: {
+              filename: preloadVideo.filename,
+              video_url: preloadVideo.video_url,
+              metadata: preloadVideo.metadata || { duration: 0 },
+            },
+            project_id: projectId,
+            src,
+            preload_style: inheritedStyle || null,
           },
           replace: true,
         });

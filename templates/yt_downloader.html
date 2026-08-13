@@ -12,11 +12,13 @@
 <header class="navbar">
     <div class="navbar-inner">
         <div class="brand">
-            <div class="brand-icon">🎬</div>
-            <div>
-                <h1>UpClip Studio</h1>
-                <p>Download • Clip • Grow</p>
-            </div>
+            <a href="/" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:12px;">
+                <div class="brand-icon">🎬</div>
+                <div>
+                    <h1>UpClip Studio</h1>
+                    <p>Download • Clip • Grow</p>
+                </div>
+            </a>
         </div>
         <div class="nav-links">
             <a href="{{ url_for('home.index') }}" class="nav-action">Home</a>
@@ -74,8 +76,17 @@
 
         <!-- Download Form Card -->
         <div class="yt-card yt-download-card">
-            <h2 class="yt-card-title">Download New Video</h2>
-            <form id="ytDownloaderForm" class="yt-form">
+            <h2 class="yt-card-title">Download from YouTube</h2>
+
+            <!-- Tab Navigation -->
+            <div class="yt-tabs yt-download-tabs">
+                <button class="yt-tab active" data-tab="video-download">🎬 Video Download</button>
+                <button class="yt-tab" data-tab="audio-download">🎵 Audio Download</button>
+                <button class="yt-tab" data-tab="batch-download">📋 Batch / Playlist</button>
+            </div>
+
+            <!-- Video Download Form -->
+            <form id="ytDownloaderForm" class="yt-form yt-tab-panel" data-tab-panel="video-download">
                 <div class="yt-form-row">
                     <div class="yt-field yt-field-url">
                         <label for="ytUrl">YouTube URL</label>
@@ -83,13 +94,6 @@
                     </div>
                 </div>
                 <div class="yt-form-row yt-form-options">
-                    <div class="yt-field">
-                        <label for="downloadFormat">Format</label>
-                        <select id="downloadFormat">
-                            <option value="video" selected>🎬 Video (MP4)</option>
-                            <option value="audio">🎵 Audio (MP3)</option>
-                        </select>
-                    </div>
                     <div class="yt-field">
                         <label for="downloadQuality">Quality</label>
                         <select id="downloadQuality">
@@ -100,9 +104,17 @@
                             <option value="360p">360p</option>
                         </select>
                     </div>
+                    <div class="yt-field">
+                        <label for="downloadFormatPreset">Preset</label>
+                        <select id="downloadFormatPreset">
+                            <option value="mp4" selected>MP4</option>
+                            <option value="webm">WebM</option>
+                            <option value="mkv">MKV</option>
+                        </select>
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-primary btn-block" id="downloadBtn">
-                    <span class="btn-icon">⬇</span> Download
+                    <span class="btn-icon">⬇</span> Download Video
                 </button>
                 <div class="yt-download-progress" id="downloadProgress" hidden>
                     <div class="yt-progress-bar">
@@ -111,6 +123,80 @@
                     <p id="downloadProgressText">Downloading...</p>
                 </div>
                 <p class="download-note" id="downloadNote">Paste a valid link to begin downloading.</p>
+            </form>
+
+            <!-- Audio Download Form -->
+            <form id="ytAudioDownloaderForm" class="yt-form yt-tab-panel" data-tab-panel="audio-download" hidden>
+                <div class="yt-form-row">
+                    <div class="yt-field yt-field-url">
+                        <label for="ytAudioUrl">YouTube URL</label>
+                        <input type="url" id="ytAudioUrl" placeholder="https://youtube.com/watch?v=..." required>
+                    </div>
+                </div>
+                <div class="yt-form-row yt-form-options">
+                    <div class="yt-field">
+                        <label for="audioFormat">Audio Format</label>
+                        <select id="audioFormat">
+                            <option value="mp3" selected>MP3 (192 kbps)</option>
+                            <option value="m4a">M4A (256 kbps)</option>
+                            <option value="wav">WAV (Lossless)</option>
+                            <option value="flac">FLAC (Lossless)</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" id="downloadAudioBtn">
+                    <span class="btn-icon">⬇</span> Extract Audio
+                </button>
+                <div class="yt-download-progress" id="downloadAudioProgress" hidden>
+                    <div class="yt-progress-bar">
+                        <div class="yt-progress-fill" id="downloadAudioProgressFill"></div>
+                    </div>
+                    <p id="downloadAudioProgressText">Extracting audio...</p>
+                </div>
+                <p class="download-note" id="downloadAudioNote">Paste a valid link to begin extracting audio.</p>
+            </form>
+
+            <!-- Batch / Playlist Download Form -->
+            <form id="ytBatchDownloaderForm" class="yt-form yt-tab-panel" data-tab-panel="batch-download" hidden>
+                <div class="yt-form-row">
+                    <div class="yt-field yt-field-url">
+                        <label for="ytBatchUrl">Playlist or Video URL</label>
+                        <input type="url" id="ytBatchUrl" placeholder="https://youtube.com/playlist?list=... or video URL" required>
+                    </div>
+                </div>
+                <div class="yt-form-row yt-form-options">
+                    <div class="yt-field">
+                        <label for="batchFormat">Format</label>
+                        <select id="batchFormat">
+                            <option value="video" selected>🎬 Video (MP4)</option>
+                            <option value="audio">🎵 Audio (MP3)</option>
+                        </select>
+                    </div>
+                    <div class="yt-field">
+                        <label for="batchQuality">Quality</label>
+                        <select id="batchQuality">
+                            <option value="best" selected>Best Available</option>
+                            <option value="1080p">1080p Full HD</option>
+                            <option value="720p">720p HD</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="yt-form-row">
+                    <div class="yt-field">
+                        <label for="batchLimit">Max Videos</label>
+                        <input type="number" id="batchLimit" min="1" max="100" value="10" placeholder="Limit playlist downloads">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" id="downloadBatchBtn">
+                    <span class="btn-icon">⬇</span> Download Batch
+                </button>
+                <div class="yt-download-progress" id="downloadBatchProgress" hidden>
+                    <div class="yt-progress-bar">
+                        <div class="yt-progress-fill" id="downloadBatchProgressFill"></div>
+                    </div>
+                    <p id="downloadBatchProgressText">Downloading batch...</p>
+                </div>
+                <p class="download-note" id="downloadBatchNote">Paste a playlist URL to begin batch downloading.</p>
             </form>
         </div>
 
@@ -181,9 +267,10 @@
     // ============================================
 
     const ytDownloaderForm = document.getElementById('ytDownloaderForm');
+    const ytAudioDownloaderForm = document.getElementById('ytAudioDownloaderForm');
+    const ytBatchDownloaderForm = document.getElementById('ytBatchDownloaderForm');
     const ytUrlInput = document.getElementById('ytUrl');
     const downloadNote = document.getElementById('downloadNote');
-    const downloadFormat = document.getElementById('downloadFormat');
     const downloadQuality = document.getElementById('downloadQuality');
     const downloadBtn = document.getElementById('downloadBtn');
     const downloadProgress = document.getElementById('downloadProgress');
@@ -212,6 +299,20 @@
 
     let currentFiles = [];
     let renameTarget = null;
+
+    // ---------- Tab Navigation ----------
+    document.querySelectorAll('.yt-download-tabs .yt-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.yt-download-tabs .yt-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            const panel = document.querySelector('.yt-tab-panel');
+            if (panel) {
+                document.querySelectorAll('.yt-tab-panel').forEach(p => p.hidden = true);
+                const target = document.querySelector(`.yt-tab-panel[data-tab-panel="${tab.dataset.tab}"]`);
+                if (target) target.hidden = false;
+            }
+        });
+    });
 
     // ---------- Format helpers ----------
     function formatBytes(bytes) {
@@ -409,7 +510,7 @@
         if (e.key === 'Escape') renameModal.hidden = true;
     });
 
-    // ---------- Download form ----------
+    // ---------- Video Download form ----------
     if (ytDownloaderForm && ytUrlInput && downloadNote) {
         ytDownloaderForm.addEventListener('submit', async (event) => {
             event.preventDefault();
@@ -420,8 +521,8 @@
                 return;
             }
 
-            const fmt = downloadFormat.value;
             const quality = downloadQuality.value;
+            const preset = document.getElementById('downloadFormatPreset')?.value || 'mp4';
 
             downloadBtn.disabled = true;
             downloadBtn.innerHTML = '<span class="spinner"></span> Downloading...';
@@ -429,7 +530,6 @@
             downloadProgressFill.style.width = '0%';
             downloadProgressText.textContent = 'Starting download...';
 
-            // Simulate progress (actual progress would need SSE/WebSocket)
             let progress = 0;
             const progressInterval = setInterval(() => {
                 progress = Math.min(progress + Math.random() * 15, 90);
@@ -441,7 +541,7 @@
                 const response = await fetch('/download/youtube', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: value, format: fmt, quality: quality })
+                    body: JSON.stringify({ url: value, format: 'video', quality: quality, preset: preset })
                 });
                 const data = await response.json();
 
@@ -457,7 +557,6 @@
                 downloadNote.classList.add('success');
                 ytUrlInput.value = '';
 
-                // Refresh the file list
                 setTimeout(() => {
                     loadDownloadedFiles();
                     downloadProgress.hidden = true;
@@ -471,7 +570,151 @@
                 downloadNote.classList.remove('success');
             } finally {
                 downloadBtn.disabled = false;
-                downloadBtn.innerHTML = '<span class="btn-icon">⬇</span> Download';
+                downloadBtn.innerHTML = '<span class="btn-icon">⬇</span> Download Video';
+            }
+        });
+    }
+
+    // ---------- Audio Download form ----------
+    const ytAudioUrlInput = document.getElementById('ytAudioUrl');
+    const downloadAudioBtn = document.getElementById('downloadAudioBtn');
+    const downloadAudioProgress = document.getElementById('downloadAudioProgress');
+    const downloadAudioProgressFill = document.getElementById('downloadAudioProgressFill');
+    const downloadAudioProgressText = document.getElementById('downloadAudioProgressText');
+    const downloadAudioNote = document.getElementById('downloadAudioNote');
+
+    if (ytAudioDownloaderForm && ytAudioUrlInput) {
+        ytAudioDownloaderForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const value = ytAudioUrlInput.value.trim();
+            if (!value) {
+                downloadAudioNote.textContent = 'Please paste a valid YouTube URL first.';
+                downloadAudioNote.classList.remove('success');
+                return;
+            }
+
+            const audioFormat = document.getElementById('audioFormat').value;
+
+            downloadAudioBtn.disabled = true;
+            downloadAudioBtn.innerHTML = '<span class="spinner"></span> Extracting...';
+            downloadAudioProgress.hidden = false;
+            downloadAudioProgressFill.style.width = '0%';
+            downloadAudioProgressText.textContent = 'Starting extraction...';
+
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress = Math.min(progress + Math.random() * 15, 90);
+                downloadAudioProgressFill.style.width = `${progress}%`;
+                downloadAudioProgressText.textContent = `Extracting... ${Math.round(progress)}%`;
+            }, 500);
+
+            try {
+                const response = await fetch('/download/youtube', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: value, format: 'audio', quality: 'best', audio_format: audioFormat })
+                });
+                const data = await response.json();
+
+                clearInterval(progressInterval);
+                downloadAudioProgressFill.style.width = '100%';
+                downloadAudioProgressText.textContent = 'Complete!';
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Extraction failed');
+                }
+
+                downloadAudioNote.textContent = `✅ Extracted: ${data.filename} (${data.size})`;
+                downloadAudioNote.classList.add('success');
+                ytAudioUrlInput.value = '';
+
+                setTimeout(() => {
+                    loadDownloadedFiles();
+                    downloadAudioProgress.hidden = true;
+                    downloadAudioProgressFill.style.width = '0%';
+                }, 1000);
+            } catch (error) {
+                clearInterval(progressInterval);
+                downloadAudioProgress.hidden = true;
+                downloadAudioProgressFill.style.width = '0%';
+                downloadAudioNote.textContent = '❌ ' + (error.message || 'Extraction failed. Please try again.');
+                downloadAudioNote.classList.remove('success');
+            } finally {
+                downloadAudioBtn.disabled = false;
+                downloadAudioBtn.innerHTML = '<span class="btn-icon">⬇</span> Extract Audio';
+            }
+        });
+    }
+
+    // ---------- Batch Download form ----------
+    const ytBatchUrlInput = document.getElementById('ytBatchUrl');
+    const downloadBatchBtn = document.getElementById('downloadBatchBtn');
+    const downloadBatchProgress = document.getElementById('downloadBatchProgress');
+    const downloadBatchProgressFill = document.getElementById('downloadBatchProgressFill');
+    const downloadBatchProgressText = document.getElementById('downloadBatchProgressText');
+    const downloadBatchNote = document.getElementById('downloadBatchNote');
+
+    if (ytBatchDownloaderForm && ytBatchUrlInput) {
+        ytBatchDownloaderForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const value = ytBatchUrlInput.value.trim();
+            if (!value) {
+                downloadBatchNote.textContent = 'Please paste a playlist or video URL first.';
+                downloadBatchNote.classList.remove('success');
+                return;
+            }
+
+            const batchFormat = document.getElementById('batchFormat').value;
+            const batchQuality = document.getElementById('batchQuality').value;
+            const batchLimit = document.getElementById('batchLimit').value;
+
+            downloadBatchBtn.disabled = true;
+            downloadBatchBtn.innerHTML = '<span class="spinner"></span> Downloading...';
+            downloadBatchProgress.hidden = false;
+            downloadBatchProgressFill.style.width = '0%';
+            downloadBatchProgressText.textContent = 'Starting batch download...';
+
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress = Math.min(progress + Math.random() * 10, 85);
+                downloadBatchProgressFill.style.width = `${progress}%`;
+                downloadBatchProgressText.textContent = `Downloading batch... ${Math.round(progress)}%`;
+            }, 1000);
+
+            try {
+                const response = await fetch('/download/youtube', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: value, format: batchFormat, quality: batchQuality, limit: parseInt(batchLimit) })
+                });
+                const data = await response.json();
+
+                clearInterval(progressInterval);
+                downloadBatchProgressFill.style.width = '100%';
+                downloadBatchProgressText.textContent = 'Complete!';
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Batch download failed');
+                }
+
+                downloadBatchNote.textContent = `✅ Batch complete: ${data.filename || 'download'}`;
+                downloadBatchNote.classList.add('success');
+                ytBatchUrlInput.value = '';
+
+                setTimeout(() => {
+                    loadDownloadedFiles();
+                    downloadBatchProgress.hidden = true;
+                    downloadBatchProgressFill.style.width = '0%';
+                }, 1000);
+            } catch (error) {
+                clearInterval(progressInterval);
+                downloadBatchProgress.hidden = true;
+                downloadBatchProgressFill.style.width = '0%';
+                downloadBatchNote.textContent = '❌ ' + (error.message || 'Batch download failed. Please try again.');
+                downloadBatchNote.classList.remove('success');
+            } finally {
+                downloadBatchBtn.disabled = false;
+                downloadBatchBtn.innerHTML = '<span class="btn-icon">⬇</span> Download Batch';
             }
         });
     }

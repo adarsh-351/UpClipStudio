@@ -12,11 +12,13 @@
 <header class="navbar">
         <div class="navbar-inner">
             <div class="brand">
-                <div class="brand-icon">🎬</div>
-                <div>
-                    <h1>UpClip Studio</h1>
-                    <p>Download • Clip • Grow</p>
-                </div>
+                <a href="/" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:12px;">
+                    <div class="brand-icon">🎬</div>
+                    <div>
+                        <h1>UpClip Studio</h1>
+                        <p>Download • Clip • Grow</p>
+                    </div>
+                </a>
             </div>
             <div class="nav-links">
                 <a href="{{ url_for('home.youtube_downloader') }}" class="nav-action">YT Downloader</a>

@@ -38,6 +38,17 @@ Turn any video into viral shorts automatically — scene detection, smart clippi
 - Burn subtitles directly into the video with custom fonts, colors, outlines & shadows
 - Multiple style presets: `youtube`, `tiktok`, `instagram`, `netflix`
 
+### ✍️ Caption Studio Editor
+- Standalone caption editor with word-by-word editing
+- Auto-caption from Whisper (20+ languages, auto-detection)
+- Caption timeline with drag & drop positioning
+- Split, merge, duplicate, and delete caption segments
+- Search & Replace across all captions (case-sensitive option)
+- Auto-split long captions for better readability
+- Export captions as SRT/VTT without video rendering
+- Send directly to YouTube Desk for upload
+- Style inheritance from Clip Cutter projects
+
 ### 🎞️ Animated Captions
 - Word-by-word progressive highlight (karaoke-style)
 - Multiple animation styles: `pop`, `fade`, `bounce`, `slide`, `zoom`, `scale`, `none`
@@ -50,8 +61,22 @@ Turn any video into viral shorts automatically — scene detection, smart clippi
 - Translate subtitles into Hindi, English, Tamil, Telugu, Spanish, French, German, Arabic, Japanese, Chinese, and more
 
 ### 📺 YouTube Downloader
-- Built-in YouTube video downloader
+- Built-in YouTube video downloader with tabbed interface (Video, Audio, Batch/Playlist)
 - Download videos and turn them directly into shorts
+- Separate audio extraction (MP3, M4A, WAV, FLAC)
+- Batch/playlist download with configurable limits
+- Send downloaded files to Clip Cutter, Caption Studio, or YouTube Desk
+
+### 📺 YouTube Desk (Automation)
+- Upload final videos directly to your YouTube channel with OAuth
+- Manage video metadata: title, description, tags, category, visibility
+- Schedule uploads for later
+- Track upload history, queue, and errors
+- Auto-scan for videos across input/clips/final directories
+- Connect your Google account securely via OAuth 2.0
+- View channel info, connection status, and upload statistics
+- Drag & drop or pick from existing files to queue uploads
+- Upload progress polling with retry support
 
 ### 📱 Professional User Guide
 - Step-by-step interactive guide for first-time users
@@ -68,7 +93,7 @@ Turn any video into viral shorts automatically — scene detection, smart clippi
 - Session-based authentication
 - Protected dashboard and studio routes
 
-### 📱 Responsive UI
+### 📲 Responsive UI
 - Fully responsive across **mobile, tablet, laptop, and PC**
 - Dark/light theme toggle
 - Live pipeline progress bar with step-by-step tracking
@@ -85,7 +110,9 @@ Turn any video into viral shorts automatically — scene detection, smart clippi
 | Video       | FFmpeg, MoviePy, imageio-ffmpeg             |
 | Frontend    | HTML, CSS, Vanilla JavaScript               |
 | Translation | deep-translator (Google Translate backend)  |
-| YouTube     | yt-dlp                                      |
+| YouTube     | yt-dlp (downloads), Google API (uploads)   |
+| OAuth       | google-auth, google-api-python-client      |
+| Frontend UI | React + Vite + Tailwind CSS + Framer Motion|
 
 ---
 
@@ -133,17 +160,44 @@ UpClipStudio/
 │   ├── upload.py           # Video upload endpoint
 │   ├── process.py          # Full AI pipeline (async jobs)
 │   ├── download.py         # Download clips/subtitles/transcripts
+│   ├── youtube.py          # YouTube Automation API (upload, schedule, metadata)
+│   ├── caption_studio.py   # Caption Studio API (auto-caption, import, export)
+│   ├── studio_navigation.py # Cross-module navigation & media passing
 │   └── __init__.py         # Blueprint initialization
 ├── templates/              # Jinja2 HTML templates
 │   ├── home.html           # Marketing home page
-│   ├── index.html          # Dashboard/studio
+│   ├── index.html          # Dashboard/studio wizard
 │   ├── guide.html          # Professional user guide
-│   ├── yt_downloader.html  # YouTube downloader
+│   ├── yt_downloader.html  # YouTube downloader (tabs: video/audio/batch)
+│   ├── youtube_desk.html   # YouTube Desk automation UI
+│   ├── caption_studio.html # Caption Studio (React SPA)
+│   ├── studio_hub.html     # Unified module navigation
 │   ├── login.html          # Sign in page
 │   └── register.html       # Sign up page
 ├── static/
-│   ├── css/style.css       # Responsive styling + themes
-│   └── js/main.js          # Wizard UI + pipeline polling
+│   ├── css/style.css       # Responsive glassmorphism styling + themes
+│   ├── js/main.js          # Wizard UI + pipeline polling
+│   └── js/youtube-desk.js  # YouTube Desk frontend logic
+├── caption_studio/         # React app for Caption Studio
+│   ├── src/
+│   │   ├── App.tsx         # React router + preload router
+│   │   ├── pages/
+│   │   │   ├── Editor.tsx  # Main caption editor
+│   │   │   ├── Landing.tsx # Landing page with upload
+│   │   │   ├── YouTubeDashboard.tsx
+│   │   │   ├── ConnectYouTube.tsx
+│   │   │   ├── MetadataEditor.tsx
+│   │   │   ├── UploadQueue.tsx
+│   │   │   ├── Scheduler.tsx
+│   │   │   ├── History.tsx
+│   │   │   └── Settings.tsx
+│   │   ├── store/
+│   │   │   └── editorStore.ts  # Zustand state management
+│   │   └── types/
+│   │       └── index.ts
+│   ├── index.css           # CSS for React app (glassmorphism)
+│   └── vite.config.ts
+├── captions/               # Generated caption files (gitignored)
 ├── input/                  # Uploaded videos (gitignored)
 ├── output/                 # Generated clips/final/subtitles (gitignored)
 ├── assets/                 # Fonts and overlays (gitignored)
@@ -211,7 +265,7 @@ Open your browser and visit 👉 **http://127.0.0.1:5000**
 ## 🎮 How to Use
 
 1. **Sign up / Log in** — create a free account
-2. **Upload a video** — drag & drop an MP4, MOV, or AVI, or use the built-in YouTube Downloader
+2. **Upload a video** — drag & drop an MP4, MOV, or AVI, or use the built-in YouTube Downloader (supports Video, Audio, and Batch/Playlist downloads)
 3. **Configure** — choose:
    - Transcript & subtitle language
    - Aspect ratio (9:16, 16:9, 1:1, original)
@@ -221,6 +275,37 @@ Open your browser and visit 👉 **http://127.0.0.1:5000**
 4. **Generate** — watch the live pipeline progress (FFmpeg → scenes → clips → Whisper → subtitles → render)
 5. **Review clips** — preview, rename, or delete before exporting
 6. **Export** — download the final clips, SRT/VTT subtitles, and transcript JSON
+
+### Using Caption Studio
+
+Caption Studio is a standalone editor for adding and editing captions on any video:
+
+1. **Open Caption Studio** from the Studio Hub, or use the "Open in Caption Studio" button from the YT Downloader or Clip Cutter
+2. **Load a video** — upload directly, use the demo, or open with a source file passed from another module (the video auto-loads)
+3. **Add captions** — click on the timeline to add caption points, or use **Auto Captions** (Whisper speech-to-text)
+4. **Edit captions** — double-click any caption segment to edit text. Use the toolbar buttons:
+   - **Split** — Split the selected caption at the current playhead position
+   - **Merge** — Merge the selected caption with the next one
+   - **Duplicate** — Create a copy of the selected caption
+   - **Delete** — Remove the selected caption
+5. **Search & Replace** (🔍) — Find and replace text across all captions, with optional case sensitivity
+6. **Auto-Split** (✂️) — Automatically split captions longer than a specified duration for better readability
+7. **Style captions** — choose from preset styles or customize font, color, outline, shadow, animation, and position
+8. **Export** — choose:
+   - **Export Video** — Burn captions into the video and download the final MP4
+   - **Export Captions Only** — Download SRT/VTT files without re-rendering the video
+9. **Send to YouTube** — If connected, directly send your project to YouTube Desk for upload
+
+### Using YouTube Desk (Automation)
+
+YouTube Desk lets you upload processed videos directly to your YouTube channel:
+
+1. **Connect YouTube** — Click "Connect YouTube" in the sidebar and authorize with your Google account
+2. **Select a video** — Drag & drop a video, or click "Use Existing" to pick from files already in your input/clips/final folders
+3. **Edit metadata** — Set title, description, tags, category, and visibility (public/unlisted/private)
+4. **Schedule or upload** — Upload immediately or schedule for a future date/time
+5. **Monitor** — View upload status, errors, and history in the sidebar panels
+6. **Send from other modules** — Use "Send to YouTube" from Clip Cutter or Caption Studio to open the file directly in YouTube Desk
 
 ---
 

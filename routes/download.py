@@ -246,6 +246,8 @@ def download_youtube_video():
     url = payload.get("url", "").strip()
     fmt = payload.get("format", "video")  # "video" or "audio"
     quality = payload.get("quality", "best")  # "best", "1080p", "720p", "480p", "360p"
+    audio_format = payload.get("audio_format", "mp3")  # mp3, m4a, wav, flac
+    limit = payload.get("limit")  # max videos for batch downloads
 
     if not _is_valid_youtube_url(url):
         return jsonify({"success": False, "error": "Please provide a valid YouTube URL."}), 400
@@ -258,11 +260,14 @@ def download_youtube_video():
 
     # Build format selection based on user choice
     if fmt == "audio":
+        codec_map = {"mp3": "mp3", "m4a": "m4a", "wav": "wav", "flac": "flac"}
+        codec = codec_map.get(audio_format, "mp3")
+        quality_map = {"mp3": "192", "m4a": "256", "wav": "320", "flac": "0"}
         format_selector = "bestaudio/best"
         postprocessors = [{
             "key": "FFmpegExtractAudio",
-            "preferredcodec": "mp3",
-            "preferredquality": "192",
+            "preferredcodec": codec,
+            "preferredquality": quality_map.get(codec, "192"),
         }]
         merge_format = None
     else:
@@ -290,6 +295,11 @@ def download_youtube_video():
         "format_sort": ["res:1080", "res:720", "res:480", "res:360"],
         "format_sort_force": True,
     }
+
+    # Handle playlist/batch downloads
+    if limit:
+        ydl_opts["noplaylist"] = False
+        ydl_opts["playlist_items"] = f"1-{limit}"
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:

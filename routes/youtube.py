@@ -448,14 +448,20 @@ def callback():
 @youtube_bp.route("/status", methods=["GET"])
 def status():
     """Check YouTube connection status."""
-    credentials = get_credentials()
-    if not credentials:
+    conn = get_db()
+    row = conn.execute(
+        "SELECT * FROM tokens WHERE user_id = 'default' ORDER BY id DESC LIMIT 1"
+    ).fetchone()
+    conn.close()
+
+    if not row or not row["access_token"]:
         return jsonify({"connected": False})
 
     return jsonify({
         "connected": True,
-        "channel_id": credentials.id_token.get("sub") if credentials.id_token else None,
-        "channel_name": credentials.id_token.get("name") if credentials.id_token else None,
+        "channel_id": row["channel_id"],
+        "channel_name": row["channel_name"],
+        "channel_avatar": row["channel_avatar"],
     })
 
 
@@ -477,63 +483,261 @@ def disconnect():
 
 @youtube_bp.route("/metadata", methods=["GET"])
 def get_metadata():
-    """Get video metadata from the database."""
+    """Get video metadata from the database by id or filename."""
     video_id = request.args.get("id")
-    if not video_id:
-        return jsonify({"success": False, "error": "Video ID required"}), 400
-
+    filename = request.args.get("filename")
     conn = get_db()
-    row = conn.execute("SELECT * FROM videos WHERE id = ?", (video_id,)).fetchone()
+
+    if video_id:
+        row = conn.execute("SELECT * FROM videos WHERE id = ?", (video_id,)).fetchone()
+    elif filename:
+        row = conn.execute(
+            "SELECT * FROM videos WHERE filename = ? ORDER BY created_at DESC LIMIT 1",
+            (Path(filename).name,),
+        ).fetchone()
+    else:
+        conn.close()
+        return jsonify({"success": False, "error": "Video ID or filename required"}), 400
+
     conn.close()
 
     if not row:
         return jsonify({"success": False, "error": "Video not found"}), 404
 
-    return jsonify({"success": True, "metadata": dict(row)})
+    result = dict(row)
+    # If tags is a JSON string, parse it
+    if result.get("tags"):
+        try:
+            result["tags"] = json.loads(result["tags"])
+        except (json.JSONDecodeError, TypeError):
+            result["tags"] = []
+    else:
+        result["tags"] = []
+
+    # Resolve the actual on-disk path
+    video_path = config.INPUT_DIR / result["filename"]
+    if video_path.exists():
+        result["path"] = str(video_path)
+        result["video_url"] = f"/download/input/{result['filename']}"
+        # Generate thumbnail if missing
+        thumb_name = f"{Path(result['filename']).stem}_thumb.jpg"
+        thumb_path = config.THUMBNAIL_DIR / thumb_name
+        if not thumb_path.exists():
+            try:
+                from utils.video_utils import VideoLoader
+                loader = VideoLoader(video_path)
+                loader.thumbnail(thumb_path)
+                loader.close()
+            except Exception:
+                pass
+        if thumb_path.exists():
+            result["thumbnail"] = f"/download/thumbnail/{thumb_name}"
+    else:
+        result["path"] = None
+
+    return jsonify({"success": True, "metadata": result})
+
+
+@youtube_bp.route("/import", methods=["POST"])
+def import_video():
+    """Import a video file that already exists locally (e.g. from a download, clip, or upload).
+
+    Accepts either a multipart/form-data file upload or a JSON body with a filename
+    referencing an existing file in the input directory. Creates a DB record and returns
+    its numeric id so subsequent upload/schedule operations can reference it.
+    Does NOT copy the file if it already lives in the input directory — it reuses the
+    existing path to avoid unnecessary duplicates.
+    """
+    config.INPUT_DIR.mkdir(parents=True, exist_ok=True)
+    config.THUMBNAIL_DIR.mkdir(parents=True, exist_ok=True)
+
+    # --- Case 1: multipart file upload (drag & drop or file picker) ---
+    if "video" in request.files:
+        file = request.files["video"]
+        if not file or file.filename == "":
+            return jsonify({
+                "success": False,
+                "error": "Please drop a video file or choose one from your device."
+            }), 400
+
+        filename = Path(file.filename).name
+
+        # Validate video extension
+        ext = Path(filename).suffix.lower()
+        if ext not in {".mp4", ".mov", ".webm", ".mkv", ".avi"}:
+            return jsonify({
+                "success": False,
+                "error": "This video format isn't supported. Please choose MP4, MOV, WebM, MKV, or AVI."
+            }), 400
+
+        save_path = config.INPUT_DIR / filename
+
+        # Avoid duplicate: if a file with the same name already exists, reuse it
+        # instead of overwriting (preserves the original source file).
+        if not save_path.exists():
+            file.save(str(save_path))
+
+        # Extract metadata & thumbnail
+        metadata = _extract_video_metadata(save_path)
+        thumb_url = _ensure_thumbnail(save_path, metadata)
+
+        video_id = _insert_video_record(filename, metadata)
+        return jsonify({
+            "success": True,
+            "video_id": video_id,
+            "filename": filename,
+            "metadata": metadata,
+            "thumbnail": thumb_url,
+            "video_url": f"/download/input/{filename}",
+        })
+
+    # --- Case 2: JSON body referencing an existing local file ---
+    data = request.get_json(silent=True) or {}
+    filename = data.get("filename", "").strip()
+
+    if not filename:
+        return jsonify({
+            "success": False,
+            "error": "No video file provided. Please drop a video file or choose one from your device."
+        }), 400
+
+    filename = Path(filename).name
+    video_path = config.INPUT_DIR / filename
+
+    if not video_path.exists():
+        # Also check clips and final output dirs
+        for check_dir in [config.CLIPS_DIR, config.FINAL_DIR]:
+            candidate = check_dir / filename
+            if candidate.exists():
+                video_path = candidate
+                break
+
+    if not video_path.exists():
+        return jsonify({
+            "success": False,
+            "error": "The selected video file could not be found on disk."
+        }), 404
+
+    metadata = _extract_video_metadata(video_path)
+    thumb_url = _ensure_thumbnail(video_path, metadata)
+
+    video_id = _insert_video_record(filename, metadata)
+    return jsonify({
+        "success": True,
+        "video_id": video_id,
+        "filename": filename,
+        "metadata": metadata,
+        "thumbnail": thumb_url,
+        "video_url": f"/download/input/{filename}",
+        "path": str(video_path),
+    })
+
+
+def _extract_video_metadata(video_path):
+    """Extract metadata from a video file. Returns a dict, never raises."""
+    metadata = {}
+    try:
+        from utils.video_utils import VideoLoader
+        loader = VideoLoader(video_path)
+        metadata = loader.metadata()
+        loader.close()
+    except Exception:
+        metadata = {
+            "filename": video_path.name,
+            "width": None,
+            "height": None,
+            "fps": None,
+            "duration": None,
+            "size_bytes": video_path.stat().st_size if video_path.exists() else 0,
+        }
+    return metadata
+
+
+def _ensure_thumbnail(video_path, metadata):
+    """Return a thumbnail URL, regenerating the thumbnail if it doesn't exist yet."""
+    stem = Path(video_path.name).stem
+    thumb_name = f"{stem}_thumb.jpg"
+    thumb_path = config.THUMBNAIL_DIR / thumb_name
+    if not thumb_path.exists():
+        try:
+            from utils.video_utils import VideoLoader
+            loader = VideoLoader(video_path)
+            loader.thumbnail(thumb_path)
+            loader.close()
+        except Exception:
+            pass
+    if thumb_path.exists():
+        return f"/download/thumbnail/{thumb_name}"
+    # Fallback: use the metadata thumbnail if the upload returned one
+    if metadata and metadata.get("thumbnail"):
+        return metadata["thumbnail"]
+    return None
+
+
+def _insert_video_record(filename, metadata):
+    """Insert (or update) a videos table row. Reuse existing record if filename matches."""
+    conn = get_db()
+    existing = conn.execute(
+        "SELECT id FROM videos WHERE filename = ? ORDER BY created_at DESC LIMIT 1",
+        (filename,),
+    ).fetchone()
+
+    if existing:
+        video_id = existing["id"]
+    else:
+        row = conn.execute(
+            """
+            INSERT INTO videos (filename, title, description, tags, category_id,
+                               visibility, duration, resolution, fps, aspect_ratio, file_size)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+            (
+                filename,
+                metadata.get("filename", filename),
+                "",
+                json.dumps([]),
+                None,
+                "public",
+                metadata.get("duration"),
+                metadata.get("resolution"),
+                metadata.get("fps"),
+                metadata.get("aspect_ratio"),
+                metadata.get("size_bytes"),
+            ),
+        )
+        video_id = row.lastrowid
+
+    conn.commit()
+    conn.close()
+    return video_id
 
 
 @youtube_bp.route("/videos", methods=["POST"])
 def create_video():
-    """Create a new video entry in the queue."""
+    """Create a new video entry in the queue (from JSON metadata only)."""
     data = request.get_json() or {}
     filename = data.get("filename", "")
 
     conn = get_db()
+    # Check if a record already exists for this filename (avoid duplicates)
+    existing = conn.execute(
+        "SELECT id FROM videos WHERE filename = ? ORDER BY created_at DESC LIMIT 1",
+        (filename,),
+    ).fetchone()
+
+    if existing:
+        video_id = existing["id"]
+        conn.close()
+        return jsonify({"success": True, "video_id": video_id, "metadata": {}})
+
     # Check if file exists locally
     video_path = BASE_DIR / "input" / filename
     metadata = {}
 
     if video_path.exists():
-        from utils.video_utils import VideoLoader
-        try:
-            loader = VideoLoader(video_path)
-            metadata = loader.metadata()
-            loader.close()
-        except Exception:
-            metadata = {}
+        metadata = _extract_video_metadata(video_path)
 
-    row = conn.execute(
-        """
-        INSERT INTO videos (filename, title, description, tags, category_id,
-                           visibility, duration, resolution, fps, aspect_ratio, file_size)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """,
-        (
-            filename,
-            data.get("title", filename),
-            data.get("description", ""),
-            json.dumps(data.get("tags", [])),
-            data.get("category_id"),
-            data.get("visibility", "public"),
-            metadata.get("duration"),
-            metadata.get("resolution"),
-            metadata.get("fps"),
-            metadata.get("aspect_ratio"),
-            metadata.get("file_size"),
-        ),
-    )
-    video_id = row.lastrowid
-    conn.commit()
+    video_id = _insert_video_record(filename, metadata)
     conn.close()
 
     return jsonify({"success": True, "video_id": video_id, "metadata": metadata})
@@ -545,7 +749,104 @@ def list_videos():
     conn = get_db()
     rows = conn.execute("SELECT * FROM videos ORDER BY created_at DESC").fetchall()
     conn.close()
-    return jsonify({"success": True, "videos": [dict(r) for r in rows]})
+    videos = []
+    for row in rows:
+        d = dict(row)
+        if d.get("tags"):
+            try:
+                d["tags"] = json.loads(d["tags"])
+            except (json.JSONDecodeError, TypeError):
+                d["tags"] = []
+        else:
+            d["tags"] = []
+        # Resolve on-disk path and generate thumbnail if needed
+        filename = d.get("filename", "")
+        video_path = config.INPUT_DIR / filename
+        if not video_path.exists():
+            video_path = config.CLIPS_DIR / filename
+        if not video_path.exists():
+            video_path = config.FINAL_DIR / filename
+        if video_path.exists():
+            d["path"] = str(video_path)
+            d["video_url"] = f"/download/input/{filename}"
+            thumb_name = f"{Path(filename).stem}_thumb.jpg"
+            thumb_path = config.THUMBNAIL_DIR / thumb_name
+            if thumb_path.exists():
+                d["thumbnail"] = f"/download/thumbnail/{thumb_name}"
+            else:
+                # Try to generate thumbnail
+                try:
+                    from utils.video_utils import VideoLoader
+                    loader = VideoLoader(video_path)
+                    loader.thumbnail(thumb_path)
+                    loader.close()
+                    if thumb_path.exists():
+                        d["thumbnail"] = f"/download/thumbnail/{thumb_name}"
+                except Exception:
+                    pass
+        videos.append(d)
+    return jsonify({"success": True, "videos": videos})
+
+
+@youtube_bp.route("/scan", methods=["GET"])
+def scan_videos():
+    """Scan all video source directories and return a unified list of available videos."""
+    video_exts = {".mp4", ".webm", ".mkv", ".avi", ".mov"}
+    sources = {
+        "local_upload": config.INPUT_DIR,
+        "yt_downloader": config.INPUT_DIR,
+        "clip_cutter": config.CLIPS_DIR,
+        "caption_studio": config.FINAL_DIR,
+        "processed": config.FINAL_DIR,
+    }
+    seen = set()
+    items = []
+    for source, directory in sources.items():
+        if not directory.exists():
+            continue
+        for p in sorted(directory.iterdir(), key=lambda x: x.stat().st_mtime, reverse=True):
+            if p.is_file() and p.suffix.lower() in video_exts:
+                if p.name in seen:
+                    continue
+                seen.add(p.name)
+                stat = p.stat()
+                ext = p.suffix.lower().lstrip(".")
+                # Determine the download/stream URL based on which directory the file is in
+                if directory == config.INPUT_DIR:
+                    video_url = f"/download/input/{p.name}"
+                    stream_url = f"/download/input/stream/{p.name}"
+                elif directory == config.CLIPS_DIR:
+                    video_url = f"/download/clip/{p.name}"
+                    stream_url = f"/download/clip/stream/{p.name}"
+                else:
+                    video_url = f"/download/final/{p.name}"
+                    stream_url = f"/download/final/{p.name}"
+                thumb_name = f"{p.stem}_thumb.jpg"
+                thumb_path = config.THUMBNAIL_DIR / thumb_name
+                thumbnail = f"/download/thumbnail/{thumb_name}" if thumb_path.exists() else None
+                items.append({
+                    "filename": p.name,
+                    "source": source,
+                    "video_url": video_url,
+                    "stream_url": stream_url,
+                    "size": stat.st_size,
+                    "size_formatted": _format_file_size(stat.st_size),
+                    "modified": datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M"),
+                    "extension": ext,
+                    "thumbnail": thumbnail,
+                })
+    return jsonify({"success": True, "videos": items})
+
+
+def _format_file_size(size_bytes):
+    """Format file size in human-readable form."""
+    if size_bytes < 1024:
+        return f"{size_bytes} B"
+    elif size_bytes < 1024 * 1024:
+        return f"{size_bytes / 1024:.1f} KB"
+    elif size_bytes < 1024 * 1024 * 1024:
+        return f"{size_bytes / (1024 * 1024):.1f} MB"
+    return f"{size_bytes / (1024 * 1024 * 1024):.2f} GB"
 
 
 @youtube_bp.route("/videos/<int:video_id>", methods=["PUT"])
@@ -599,8 +900,13 @@ def upload_start():
     try:
         youtube = get_youtube_service()
 
-        # Get video file path
-        video_path = BASE_DIR / "input" / video_row["filename"]
+        # Get video file path — check input, clips, and final directories
+        filename = video_row["filename"]
+        video_path = config.INPUT_DIR / filename
+        if not video_path.exists():
+            video_path = config.CLIPS_DIR / filename
+        if not video_path.exists():
+            video_path = config.FINAL_DIR / filename
         if not video_path.exists():
             conn.close()
             return jsonify({"success": False, "error": "Video file not found"}), 404
@@ -645,11 +951,183 @@ def upload_start():
             "video_id": video_id,
             "title": title,
             "visibility": visibility,
+            "filename": filename,
+            "video_path": str(video_path),
         })
 
     except Exception as e:
         conn.close()
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+@youtube_bp.route("/upload/execute", methods=["POST"])
+def upload_execute():
+    """Execute the actual YouTube upload to completion in a background thread.
+
+    Accepts a DB video_id (from the videos table) and uses the stored metadata
+    (title, description, tags, category, visibility).  Progress is tracked
+    via the upload_queue table so the frontend can poll it.
+    """
+    data = request.get_json() or {}
+    video_id = data.get("video_id")
+
+    if not video_id:
+        return jsonify({"success": False, "error": "video_id required"}), 400
+
+    conn = get_db()
+    video_row = conn.execute("SELECT * FROM videos WHERE id = ?", (video_id,)).fetchone()
+    if not video_row:
+        conn.close()
+        return jsonify({"success": False, "error": "Video not found"}), 404
+
+    # Insert a queue row so progress can be polled
+    title = video_row["title"] or video_row["filename"]
+    description = video_row["description"] or ""
+    tags = video_row["tags"] or json.dumps([])
+    category_id = video_row["category_id"] or "22"
+    visibility = video_row["visibility"] or "public"
+    scheduled_at = data.get("scheduled_at")
+
+    cursor = conn.execute(
+        """
+        INSERT INTO upload_queue (video_id, title, description, tags, category_id,
+                                  visibility, scheduled_at, status, retry_count, max_retries)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'uploading', 0, 3)
+        """,
+        (video_id, title, description, tags, category_id, visibility, scheduled_at),
+    )
+    queue_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+
+    # Resolve file path (check input, clips, final dirs)
+    filename = video_row["filename"]
+    video_path = config.INPUT_DIR / filename
+    if not video_path.exists():
+        video_path = config.CLIPS_DIR / filename
+    if not video_path.exists():
+        video_path = config.FINAL_DIR / filename
+    if not video_path.exists():
+        conn = get_db()
+        conn.execute("UPDATE upload_queue SET status = 'failed', error_message = 'Video file not found' WHERE id = ?", (queue_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({"success": False, "error": "Video file not found"}), 404
+
+    def _do_upload():
+        try:
+            youtube = get_youtube_service()
+
+            media = MediaFileUpload(
+                str(video_path),
+                resumable=True,
+                chunksize=1024 * 1024 * 5,
+            )
+            body = {
+                "snippet": {
+                    "title": title,
+                    "description": description,
+                    "tags": json.loads(tags)[:5] if tags else [],
+                    "categoryId": category_id,
+                },
+                "status": {
+                    "privacyStatus": visibility,
+                },
+            }
+
+            # Add thumbnail if the video has one stored
+            thumb_name = f"{Path(filename).stem}_thumb.jpg"
+            thumb_path = config.THUMBNAIL_DIR / thumb_name
+            if thumb_path.exists():
+                body["thumbnails"] = {}  # placeholder; thumbnails set separately
+
+            insert_request = youtube.videos().insert(
+                part="snippet,status",
+                body=body,
+                media_body=media,
+            )
+
+            response = None
+            file_size = video_path.stat().st_size
+            uploaded = 0
+
+            def _on_progress(chunk_size):
+                nonlocal uploaded
+                uploaded += chunk_size
+                pct = round(min(100, (uploaded / file_size) * 100)) if file_size else 0
+                c = get_db()
+                c.execute(
+                    "UPDATE upload_queue SET progress = ?, updated_at = CAST(strftime('%s', 'now') AS INTEGER) WHERE id = ?",
+                    (pct, queue_id),
+                )
+                c.commit()
+                c.close()
+
+            # Execute the resumable upload with progress callback
+            while response is None:
+                status, response = insert_request.next_chunk()
+                if status:
+                    uploaded = int(status.resumable_progress or 0)
+                    pct = round(min(100, (uploaded / file_size) * 100)) if file_size else 0
+                    c = get_db()
+                    c.execute(
+                        "UPDATE upload_queue SET progress = ?, updated_at = CAST(strftime('%s', 'now') AS INTEGER) WHERE id = ?",
+                        (pct, queue_id),
+                    )
+                    c.commit()
+                    c.close()
+
+            youtube_video_id = response.get("id")
+
+            # Upload thumbnail separately if available
+            if thumb_path.exists() and youtube_video_id:
+                try:
+                    youtube.thumbnails().set(
+                        videoId=youtube_video_id,
+                        media_body=MediaFileUpload(str(thumb_path), resumable=True),
+                    ).execute()
+                except Exception:
+                    pass
+
+            conn = get_db()
+            conn.execute(
+                """UPDATE videos SET youtube_video_id = ?, status = 'uploaded',
+                   updated_at = CAST(strftime('%s', 'now') AS INTEGER) WHERE id = ?""",
+                (youtube_video_id, video_id),
+            )
+            conn.execute(
+                """UPDATE upload_queue SET status = 'done', progress = 100,
+                   youtube_video_id = ?, updated_at = CAST(strftime('%s', 'now') AS INTEGER)
+                   WHERE id = ?""",
+                (youtube_video_id, queue_id),
+            )
+            conn.commit()
+            conn.close()
+
+        except Exception as e:
+            conn = get_db()
+            conn.execute(
+                """UPDATE upload_queue SET status = 'failed', error_message = ?,
+                   updated_at = CAST(strftime('%s', 'now') AS INTEGER) WHERE id = ?""",
+                (str(e), queue_id),
+            )
+            conn.execute(
+                """UPDATE videos SET status = 'failed',
+                   updated_at = CAST(strftime('%s', 'now') AS INTEGER) WHERE id = ?""",
+                (video_id,),
+            )
+            conn.commit()
+            conn.close()
+
+    thread = threading.Thread(target=_do_upload, daemon=True)
+    thread.start()
+
+    return jsonify({
+        "success": True,
+        "queue_id": queue_id,
+        "video_id": video_id,
+        "status": "uploading",
+    })
 
 
 @youtube_bp.route("/upload/chunk", methods=["POST"])
@@ -670,10 +1148,13 @@ def upload_chunk():
         youtube = get_youtube_service()
 
         # Return status
+        file_size = video_row["file_size"] or 1
+        if file_size <= 0:
+            file_size = 1
         return jsonify({
             "success": True,
             "status": "uploading",
-            "progress": min(100, int((position / max(video_row["file_size"] or 1, 1)) * 100)),
+            "progress": min(100, int((position / file_size) * 100)),
         })
 
     except Exception as e:
@@ -683,8 +1164,24 @@ def upload_chunk():
 
 @youtube_bp.route("/upload/progress/<int:video_id>", methods=["GET"])
 def upload_progress(video_id: int):
-    """Get upload progress for a video."""
+    """Get upload progress for a video — checks the upload_queue first, then the videos table."""
     conn = get_db()
+    queue_row = conn.execute(
+        "SELECT * FROM upload_queue WHERE video_id = ? ORDER BY id DESC LIMIT 1",
+        (video_id,),
+    ).fetchone()
+    if queue_row:
+        result = {
+            "success": True,
+            "progress": queue_row["progress"] or 0,
+            "status": queue_row["status"] or "queued",
+            "queue_id": queue_row["id"],
+            "error_message": queue_row["error_message"],
+            "retry_count": queue_row["retry_count"] or 0,
+        }
+        conn.close()
+        return jsonify(result)
+
     row = conn.execute("SELECT * FROM videos WHERE id = ?", (video_id,)).fetchone()
     conn.close()
 
@@ -1367,6 +1864,58 @@ def retry_queue_item(queue_id: int):
     conn.close()
 
     return jsonify({"success": True, "retry_count": row["retry_count"] + 1})
+
+
+@youtube_bp.route("/upload-queue/<int:queue_id>", methods=["DELETE"])
+def delete_queue_item(queue_id: int):
+    """Remove an item from the upload queue."""
+    conn = get_db()
+    row = conn.execute("SELECT * FROM upload_queue WHERE id = ?", (queue_id,)).fetchone()
+    if not row:
+        conn.close()
+        return jsonify({"success": False, "error": "Queue item not found"}), 404
+
+    conn.execute("DELETE FROM upload_queue WHERE id = ?", (queue_id,))
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True})
+
+
+@youtube_bp.route("/upload-queue", methods=["POST"])
+def add_to_upload_queue():
+    """Add a video to the upload queue (creates queue entry from a videos table row)."""
+    data = request.get_json() or {}
+    video_id = data.get("video_id")
+
+    if not video_id:
+        return jsonify({"success": False, "error": "video_id required"}), 400
+
+    conn = get_db()
+    video_row = conn.execute("SELECT * FROM videos WHERE id = ?", (video_id,)).fetchone()
+    if not video_row:
+        conn.close()
+        return jsonify({"success": False, "error": "Video not found"}), 404
+
+    title = video_row["title"] or video_row["filename"]
+    description = video_row["description"] or ""
+    tags = video_row["tags"] or json.dumps([])
+    category_id = video_row["category_id"] or "22"
+    visibility = video_row["visibility"] or "public"
+    scheduled_at = data.get("scheduled_at")
+
+    conn.execute(
+        """
+        INSERT INTO upload_queue (video_id, title, description, tags, category_id,
+                                  visibility, scheduled_at, status, retry_count, max_retries)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'queued', 0, 3)
+        """,
+        (video_id, title, description, tags, category_id, visibility, scheduled_at),
+    )
+    conn.commit()
+    queue_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+    conn.close()
+
+    return jsonify({"success": True, "queue_id": queue_id, "video_id": video_id})
 
 
 # ---------------------------------------------------------------

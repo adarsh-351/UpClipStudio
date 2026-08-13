@@ -31,6 +31,11 @@ import {
   Mic,
   ArrowLeft,
   Youtube,
+  Search,
+  Replace,
+  Split,
+  FileText,
+  Eraser,
 } from "lucide-react";
 import { useEditorStore } from "../store/editorStore";
 import type { CaptionStyle } from "../types";
@@ -50,6 +55,13 @@ export default function Editor() {
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [activePanel, setActivePanel] = useState<"text" | "style" | "effects" | "export">("text");
   const [showExport, setShowExport] = useState(false);
+  const [showSearchReplace, setShowSearchReplace] = useState(false);
+  const [searchText, setSearchText] = useState("");
+  const [replaceText, setReplaceText] = useState("");
+  const [searchCaseSensitive, setSearchCaseSensitive] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showAutoSplit, setShowAutoSplit] = useState(false);
+  const [autoSplitMaxDur, setAutoSplitMaxDur] = useState(7.0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [autoCaptionLang, setAutoCaptionLang] = useState("en");
   const [isAutoCaptioning, setIsAutoCaptioning] = useState(false);
@@ -337,6 +349,124 @@ export default function Editor() {
     }
   };
 
+  const handleSearchReplace = async () => {
+    if (!searchText.trim()) return;
+    setIsSearching(true);
+    try {
+      const { captions } = useEditorStore.getState();
+      const res = await fetch("/api/caption-studio/search-replace", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          captions,
+          search: searchText,
+          replace: replaceText,
+          case_sensitive: searchCaseSensitive,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Search/Replace failed");
+      useEditorStore.getState().captions = data.captions;
+      useEditorStore.getState().pushHistory();
+      setShowSearchReplace(false);
+      setSearchText("");
+      setReplaceText("");
+      alert(`Replaced ${data.replaceCount} caption(s).`);
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Search/Replace failed");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleAutoSplit = async () => {
+    const { captions } = useEditorStore.getState();
+    if (!captions.length) return;
+    try {
+      const res = await fetch("/api/caption-studio/auto-split", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          captions,
+          max_duration: autoSplitMaxDur,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Auto-split failed");
+      useEditorStore.getState().captions = data.captions;
+      useEditorStore.getState().pushHistory();
+      setShowAutoSplit(false);
+      alert(`Split captions. Now ${data.captions.length} segments.`);
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Auto-split failed");
+    }
+  };
+
+  const handleExportCaptions = async () => {
+    const { captions, selectedStyleId, styles, canvasSettings, exportSettings } = useEditorStore.getState();
+    if (!captions.length) {
+      alert("No captions to export.");
+      return;
+    }
+    const format = exportSettings.format === "webm" ? "srt" : "both";
+    try {
+      const res = await fetch("/api/caption-studio/export-captions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          captions,
+          videoFileName: videoFileName,
+          project_id: projectId,
+          format,
+        }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || "Export failed");
+      if (data.files.srt) window.open(data.files.srt.url, "_blank");
+      if (data.files.vtt) window.open(data.files.vtt.url, "_blank");
+      alert("Captions exported!");
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Export failed");
+    }
+  };
+
+  const handleClearAllCaptions = () => {
+    if (!confirm("Delete all captions? This cannot be undone.")) return;
+    useEditorStore.getState().captions = [];
+    useEditorStore.getState().pushHistory();
+    useEditorStore.getState().selectCaption(null);
+  };
+
+  const handleSplitSelected = () => {
+    const { captions, selectedCaptionId, currentTime } = useEditorStore.getState();
+    const cap = captions.find((c) => c.id === selectedCaptionId);
+    if (!cap) return;
+    const splitTime = currentTime || (cap.start + cap.end) / 2;
+    if (splitTime <= cap.start || splitTime >= cap.end) return;
+    useEditorStore.getState().splitCaption(cap.id, splitTime);
+    useEditorStore.getState().pushHistory();
+  };
+
+  const handleDuplicateSelected = () => {
+    const { selectedCaptionId } = useEditorStore.getState();
+    if (!selectedCaptionId) return;
+    useEditorStore.getState().duplicateCaption(selectedCaptionId);
+    useEditorStore.getState().pushHistory();
+  };
+
+  const handleMergeSelected = () => {
+    const { captions, selectedCaptionId } = useEditorStore.getState();
+    const selected = captions.find((c) => c.id === selectedCaptionId);
+    if (!selected) return;
+    const next = captions.find((c) => c.start >= selected.end);
+    if (!next) {
+      alert("No next caption to merge with.");
+      return;
+    }
+    useEditorStore.getState().mergeCaptions(selected.id, next.id);
+    useEditorStore.getState().pushHistory();
+  };
+
   const handleDragStart = (e: React.MouseEvent, captionId: string, type: "move" | "resize-start" | "resize-end") => {
     e.stopPropagation();
     setDragState({ captionId, type });
@@ -435,15 +565,24 @@ export default function Editor() {
           <button onClick={redo} className="p-2 rounded-lg hover:bg-white/5 transition-colors" title="Redo (Ctrl+Shift+Z)">
             <Redo2 className="w-4 h-4 text-white/70" />
           </button>
-          <button onClick={sendToYouTube} className="btn-secondary flex items-center gap-1 text-xs">
-            <Youtube className="w-4 h-4" /> YouTube
-          </button>
-          <button onClick={() => setShowExport(true)} className="btn-primary flex items-center gap-2">
-            <Download className="w-4 h-4" />
-            Export
-          </button>
-        </div>
-      </header>
+           <button onClick={sendToYouTube} className="btn-secondary flex items-center gap-1 text-xs">
+             <Youtube className="w-4 h-4" /> YouTube
+           </button>
+           <button onClick={() => setShowSearchReplace(true)} className="p-2 rounded-lg hover:bg-white/5 transition-colors" title="Search & Replace">
+             <Search className="w-4 h-4 text-white/70" />
+           </button>
+           <button onClick={() => setShowAutoSplit(true)} className="p-2 rounded-lg hover:bg-white/5 transition-colors" title="Auto-Split Long Captions">
+             <Split className="w-4 h-4 text-white/70" />
+           </button>
+           <button onClick={handleClearAllCaptions} className="p-2 rounded-lg hover:bg-white/5 transition-colors" title="Clear All Captions">
+             <Eraser className="w-4 h-4 text-white/70" />
+           </button>
+           <button onClick={() => setShowExport(true)} className="btn-primary flex items-center gap-2">
+             <Download className="w-4 h-4" />
+             Export
+           </button>
+         </div>
+       </header>
 
       <div className="flex-1 flex overflow-hidden">
         <aside className="w-72 border-r border-white/5 bg-black/10 overflow-y-auto hidden md:flex flex-col">
@@ -691,8 +830,14 @@ export default function Editor() {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <button onClick={() => duplicateCaption(selectedCaption.id)} className="btn-secondary flex-1 flex items-center justify-center gap-1 text-xs py-2">
+                        <button onClick={handleSplitSelected} className="btn-secondary flex-1 flex items-center justify-center gap-1 text-xs py-2" title="Split at current position">
+                          <Scissors className="w-3 h-3" /> Split
+                        </button>
+                        <button onClick={handleDuplicateSelected} className="btn-secondary flex-1 flex items-center justify-center gap-1 text-xs py-2">
                           <Copy className="w-3 h-3" /> Duplicate
+                        </button>
+                        <button onClick={handleMergeSelected} className="btn-secondary flex-1 flex items-center justify-center gap-1 text-xs py-2" title="Merge with next">
+                          <Merge className="w-3 h-3" /> Merge
                         </button>
                         <button onClick={() => deleteCaption(selectedCaption.id)} className="px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all">
                           <Trash2 className="w-4 h-4" />
@@ -1036,6 +1181,10 @@ export default function Editor() {
                   <Download className="w-4 h-4" />
                   Export Video
                 </button>
+                <button onClick={handleExportCaptions} className="btn-secondary w-full flex items-center justify-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Export Captions Only
+                </button>
                 {projectId && (
                   <button onClick={sendToYouTube} className="btn-secondary w-full flex items-center justify-center gap-2">
                     <Youtube className="w-4 h-4" /> Send to YouTube
@@ -1050,6 +1199,123 @@ export default function Editor() {
       <AnimatePresence>
         {showExport && (
           <ExportModal onClose={() => setShowExport(false)} projectId={projectId} videoFileName={videoFileName} />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showSearchReplace && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowSearchReplace(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="glass-panel p-6 w-full max-w-md"
+            >
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <Search className="w-5 h-5 text-brand-accent" />
+                Search & Replace
+              </h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-white/50 mb-2">Search</label>
+                  <input
+                    type="text"
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    placeholder="Text to find..."
+                    className="input-field"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-white/50 mb-2">Replace</label>
+                  <input
+                    type="text"
+                    value={replaceText}
+                    onChange={(e) => setReplaceText(e.target.value)}
+                    placeholder="Replacement text..."
+                    className="input-field"
+                  />
+                </div>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={searchCaseSensitive}
+                    onChange={(e) => setSearchCaseSensitive(e.target.checked)}
+                    className="rounded bg-white/10 border-white/20"
+                  />
+                  Case sensitive
+                </label>
+              </div>
+              <div className="flex gap-2 mt-6">
+                <button onClick={() => setShowSearchReplace(false)} className="btn-secondary flex-1">Cancel</button>
+                <button
+                  onClick={handleSearchReplace}
+                  disabled={isSearching || !searchText.trim()}
+                  className="btn-primary flex-1 flex items-center justify-center gap-2"
+                >
+                  {isSearching ? <span className="spinner" /> : <Replace className="w-4 h-4" />}
+                  Replace
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showAutoSplit && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowAutoSplit(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="glass-panel p-6 w-full max-w-md"
+            >
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <Split className="w-5 h-5 text-brand-accent" />
+                Auto-Split Captions
+              </h2>
+              <p className="text-sm text-white/60 mb-4">
+                Split captions longer than the specified duration into smaller segments for better readability.
+              </p>
+              <div>
+                <label className="block text-xs font-medium text-white/50 mb-2">
+                  Max Duration per Segment ({autoSplitMaxDur}s)
+                </label>
+                <input
+                  type="range"
+                  min="3"
+                  max="15"
+                  step="0.5"
+                  value={autoSplitMaxDur}
+                  onChange={(e) => setAutoSplitMaxDur(Number(e.target.value))}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-white/40 mt-1">
+                  <span>3s</span>
+                  <span>15s</span>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-6">
+                <button onClick={() => setShowAutoSplit(false)} className="btn-secondary flex-1">Cancel</button>
+                <button
+                  onClick={handleAutoSplit}
+                  className="btn-primary flex-1 flex items-center justify-center gap-2"
+                >
+                  <Split className="w-4 h-4" />
+                  Split Now
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

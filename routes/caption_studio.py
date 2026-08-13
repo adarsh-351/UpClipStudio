@@ -30,8 +30,15 @@ def caption_studio_page():
             pass
 
     # If a video param is provided, prepare preload data for the React app
-    if video_param and not preload_video:
-        video_path = config.INPUT_DIR / video_param
+    # Also support ?src= filename (used by YT Downloader and Clip Cutter "Open in Caption Studio")
+    video_to_load = video_param or filename
+    if video_to_load and not preload_video:
+        # Check input dir first, then clips dir
+        video_path = config.INPUT_DIR / video_to_load
+        video_url = f"/download/input/{video_to_load}"
+        if not video_path.exists():
+            video_path = config.CLIPS_DIR / video_to_load
+            video_url = f"/download/clip/{video_to_load}"
         if video_path.exists():
             try:
                 from utils.video_utils import VideoLoader
@@ -39,8 +46,8 @@ def caption_studio_page():
                 meta = loader.metadata()
                 loader.close()
                 preload_video = {
-                    "filename": video_param,
-                    "video_url": f"/download/input/{video_param}",
+                    "filename": video_to_load,
+                    "video_url": video_url,
                     "metadata": {
                         "duration": meta.get("duration", 0),
                         "width": meta.get("width", 1080),
@@ -321,6 +328,144 @@ def caption_studio_preload():
     """Return any preloaded data stored in the session."""
     data = session.pop("caption_studio_preload", None)
     return jsonify({"success": True, "preload": data})
+
+
+@caption_studio_bp.route("/api/caption-studio/export-captions", methods=["POST"])
+def export_captions_only():
+    """Export captions as SRT/VTT files without rendering the video."""
+    data = request.get_json() or {}
+    captions = data.get("captions", [])
+    project_id = data.get("project_id", "")
+    video_filename = data.get("videoFileName", "")
+    output_format = data.get("format", "both")  # "srt", "vtt", or "both"
+
+    if not captions:
+        return jsonify({"success": False, "error": "No captions to export"}), 400
+
+    try:
+        config.SUBTITLE_DIR.mkdir(parents=True, exist_ok=True)
+        results = {}
+
+        if output_format in ("srt", "both"):
+            srt_content = _build_srt(captions)
+            srt_name = f"captions_export.srt"
+            srt_path = config.SUBTITLE_DIR / srt_name
+            srt_path.write_text(srt_content, encoding="utf-8")
+            results["srt"] = {"filename": srt_name, "url": f"/download/subtitle/{srt_name}"}
+
+        if output_format in ("vtt", "both"):
+            vtt_content = _build_vtt(captions)
+            vtt_name = f"captions_export.vtt"
+            vtt_path = config.SUBTITLE_DIR / vtt_name
+            vtt_path.write_text(vtt_content, encoding="utf-8")
+            results["vtt"] = {"filename": vtt_name, "url": f"/download/subtitle/{vtt_name}"}
+
+        if project_id:
+            try:
+                from core.project_state import project_state
+                for fmt_key, info in results.items():
+                    project_state.add_caption_file(
+                        project_id, info["filename"], fmt_key, info["url"]
+                    )
+            except Exception:
+                pass
+
+        return jsonify({"success": True, "files": results})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@caption_studio_bp.route("/api/caption-studio/search-replace", methods=["POST"])
+def search_replace_captions():
+    """Search and replace text across all captions."""
+    data = request.get_json() or {}
+    captions = data.get("captions", [])
+    search_text = data.get("search", "")
+    replace_text = data.get("replace", "")
+    case_sensitive = data.get("case_sensitive", False)
+
+    if not captions or not search_text:
+        return jsonify({"success": False, "error": "No captions or search text provided"}), 400
+
+    try:
+        updated = []
+        count = 0
+        for cap in captions:
+            text = cap.get("text", "")
+            original_text = text
+            if case_sensitive:
+                new_text = text.replace(search_text, replace_text)
+            else:
+                # Case-insensitive replace preserving the original text's casing for the search term
+                import re
+                new_text = re.sub(
+                    re.escape(search_text),
+                    replace_text,
+                    text,
+                    flags=re.IGNORECASE
+                )
+            if new_text != original_text:
+                count += 1
+            updated.append({**cap, "text": new_text})
+
+        return jsonify({"success": True, "captions": updated, "replaceCount": count})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@caption_studio_bp.route("/api/caption-studio/auto-split", methods=["POST"])
+def auto_split_captions():
+    """Auto-split captions that exceed a maximum duration into smaller segments."""
+    data = request.get_json() or {}
+    captions = data.get("captions", [])
+    max_duration = data.get("max_duration", 7.0)
+
+    if not captions:
+        return jsonify({"success": False, "error": "No captions provided"}), 400
+
+    try:
+        updated = []
+        for cap in captions:
+            cap_duration = cap.get("end", 0) - cap.get("start", 0)
+            if cap_duration > max_duration:
+                # Split into equal segments based on word boundaries
+                words = cap.get("words", [])
+                if not words:
+                    words = cap.get("text", "").split()
+                total_words = len(words)
+                if total_words <= 1:
+                    updated.append(cap)
+                    continue
+
+                # Determine number of splits
+                num_splits = int(cap_duration / max_duration) + 1
+                words_per_split = max(1, total_words // num_splits)
+
+                for i in range(num_splits):
+                    start_idx = i * words_per_split
+                    end_idx = min((i + 1) * words_per_split, total_words) if i < num_splits - 1 else total_words
+                    if start_idx >= total_words:
+                        break
+                    split_words = words[start_idx:end_idx] if isinstance(words, list) and words and isinstance(words[0], dict) else words[start_idx:end_idx]
+
+                    segment_start = cap["start"] + (i * cap_duration / num_splits)
+                    segment_end = cap["start"] + ((i + 1) * cap_duration / num_splits) if i < num_splits - 1 else cap["end"]
+
+                    word_texts = [w["text"] if isinstance(w, dict) else str(w) for w in split_words]
+                    segment = {
+                        "id": f"{cap.get('id', 'cap')}_split_{i}",
+                        "text": " ".join(word_texts),
+                        "start": segment_start,
+                        "end": segment_end,
+                    }
+                    updated.append(segment)
+            else:
+                updated.append(cap)
+
+        updated.sort(key=lambda c: c.get("start", 0))
+        return jsonify({"success": True, "captions": updated})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 def _build_srt(captions):
