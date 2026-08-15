@@ -22,6 +22,9 @@ flatbuffers==25.12.19
 fonttools==4.63.0
 fsspec==2026.7.0
 future==1.0.0
+google-auth
+google-auth-oauthlib
+google-api-python-client
 h11==0.16.0
 hf-xet==1.5.2
 httpcore==1.0.9
