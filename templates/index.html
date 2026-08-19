@@ -3,25 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Shorts Studio</title>
+    <title>AI Clip Studio | UpClip Studio</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&family=Montserrat:wght@700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-<!-- Header -->
-    <header class="navbar">
-        <div class="navbar-inner">
-            <div class="brand">
-                <a href="/" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:12px;">
-                    <div class="brand-icon">🎬</div>
-                    <div>
-                        <h1>UpClip Studio</h1>
-                        <p>Download • Clip • Grow</p>
-                    </div>
+    <div class="app-shell">
+        <!-- Top Bar -->
+        <header class="app-topbar">
+            <div class="topbar-left">
+                <a href="/" class="topbar-brand">
+                    <span class="brand-dot"></span>
+                    <span>UpClip Studio</span>
                 </a>
+                <div class="topbar-divider"></div>
+                <div class="topbar-workspace-title">
+                    <svg data-lucide="wand-sparkles" width="16" height="16" style="color:var(--primary);"></svg>
+                    <span>AI Clip Studio</span>
+                </div>
             </div>
-<div class="nav-links">
+
+            <div class="topbar-center">
+                <button class="command-trigger" id="topbarCommandTrigger" data-tooltip="Quick Command Menu" data-hotkey="Ctrl+K">
+                    <div class="command-trigger-left">
+                        <svg data-lucide="search" width="14" height="14"></svg>
+                        <span>Search commands or switch workspace...</span>
+                    </div>
+                    <span class="kbd-badge">Ctrl + K</span>
+                </button>
+            </div>
+
+            <div class="topbar-right">
                 <span class="ffmpeg-badge" id="ffmpegBadge">Checking FFmpeg...</span>
                 <button class="jobs-indicator" id="jobsIndicator" hidden title="Active background tasks">
                     <span class="jobs-dot"></span>
@@ -31,8 +44,7 @@
                     <div class="jobs-popup-header">Active Tasks</div>
                     <div id="jobsList" class="jobs-popup-list"></div>
                 </div>
-                <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">🌙</button>
-                <a href="/" class="btn btn-secondary btn-sm-nav">Home</a>
+                <button class="topbar-btn theme-toggle" id="themeToggle" aria-label="Toggle theme" data-tooltip="Toggle Dark/Light theme">🌙</button>
                 {% if current_user %}
                     <div class="account-menu">
                         <button class="account-btn" id="accountBtn">
@@ -45,518 +57,589 @@
                                 <strong>{{ current_user['username'] }}</strong>
                                 <span>{{ current_user['email'] }}</span>
                             </div>
-                            <a href="{{ url_for('home.youtube_desk') }}" class="dropdown-item">📺 YouTube Desk</a>
+                            <a href="{{ url_for('home.youtube_desk') }}" class="dropdown-item"><svg data-lucide="tv" width="14" height="14"></svg> YouTube Desk</a>
                             <button class="dropdown-item" id="logoutBtn">Sign Out</button>
                         </div>
                     </div>
                 {% endif %}
             </div>
-            <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
-        </div>
-        <!-- Mobile menu -->
-        <div class="mobile-menu" id="mobileMenu" hidden>
-            <a href="/" class="mobile-link">Home</a>
-            <a href="{{ url_for('home.youtube_desk') }}" class="mobile-link">📺 YouTube Desk</a>
-            {% if current_user %}
-                <div class="mobile-user">
-                    <span class="account-avatar">{{ current_user['username'][0]|upper }}</span>
-                    {{ current_user['username'] }}
-                </div>
-                <button class="mobile-link" id="logoutBtnMobile">Sign Out</button>
-            {% endif %}
-        </div>
-    </header>
+        </header>
 
-    <main class="container">
-        <!-- Studio Loader -->
-        <div class="studio-loader-overlay" id="studioLoader" hidden>
-            <div class="studio-loader-content">
-                <div class="spinner large"></div>
-                <p class="studio-loader-text">Loading your Studio…</p>
-            </div>
-        </div>
-
-        <!-- Breadcrumb Navigation -->
-        <nav class="breadcrumb-nav" id="breadcrumbNav">
-            <a href="/" class="breadcrumb-link">Home</a>
-            <span class="breadcrumb-sep">/</span>
-            <span class="breadcrumb-current">AI Shorts Studio</span>
-        </nav>
-
-        <!-- Hero -->
-        <section class="hero">
-            <h2>Create Viral Shorts with AI</h2>
-            <p>Upload a video, configure language, aspect ratio, clipping, and naming — then let AI generate the perfect clips.</p>
-        </section>
-
-        <!-- Caption Style Preset (applied before clipping) -->
-        <section class="card caption-style-section" id="captionStyleSection">
-            <h3 class="card-title">🎨 Caption Style (Optional)</h3>
-            <p class="wiz-desc">Choose a caption style that will be applied to all generated clips. You can edit it later in Caption Studio.</p>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Caption Style Preset</label>
-                    <select id="captionStylePreset">
-                        <option value="">None (default)</option>
-                        <option value="tiktok_pop">TikTok Pop</option>
-                        <option value="youtube">YouTube</option>
-                        <option value="minimal">Minimal</option>
-                        <option value="bold">Bold</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Font Size</label>
-                    <input type="number" id="presetCaptionSize" min="10" max="120" value="34">
-                </div>
-                <div class="form-group">
-                    <label>Position</label>
-                    <select id="presetCaptionPosition">
-                        <option value="bottom">Bottom</option>
-                        <option value="top">Top</option>
-                        <option value="middle">Center</option>
-                    </select>
-                </div>
-            </div>
-        </section>
-
-        <!-- Wizard -->
-        <section class="wizard card" id="wizard">
-<!-- Stepper -->
-            <div class="wizard-steps">
-                <div class="wiz-step active" data-wiz="1"><div class="wiz-num">1</div><span>Upload</span></div>
-                <div class="wiz-step" data-wiz="2"><div class="wiz-num">2</div><span>Language</span></div>
-                <div class="wiz-step" data-wiz="3"><div class="wiz-num">3</div><span>Aspect</span></div>
-                <div class="wiz-step" data-wiz="4"><div class="wiz-num">4</div><span>Clipping</span></div>
-                <div class="wiz-step" data-wiz="5"><div class="wiz-num">5</div><span>Naming</span></div>
-                <div class="wiz-step" data-wiz="6"><div class="wiz-num">6</div><span>Captions</span></div>
-                <div class="wiz-step" data-wiz="7"><div class="wiz-num">7</div><span>Generate</span></div>
-                <div class="wiz-step" data-wiz="8"><div class="wiz-num">8</div><span>Review</span></div>
-                <div class="wiz-step" data-wiz="9"><div class="wiz-num">9</div><span>Export</span></div>
-            </div>
-
-            <!-- STEP 1: UPLOAD -->
-            <div class="wiz-panel active" data-panel="1">
-                <h3 class="wiz-title">📤 Upload Video</h3>
-                <div class="upload-card" id="uploadZone">
-                    <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="17 8 12 3 7 8"/>
-                        <line x1="12" y1="3" x2="12" y2="15"/>
-                    </svg>
-                    <p class="upload-title">Drag & drop your video here</p>
-                    <p class="upload-sub">or click to browse (MP4, MOV, AVI)</p>
-                    <input type="file" id="videoInput" accept="video/*" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;">
-                    <button class="btn btn-primary" id="browseBtn">Browse Files</button>
-                </div>
-                <div class="upload-progress" id="uploadProgress" hidden>
-                    <div class="progress-bar"><div class="progress-fill" id="uploadFill"></div></div>
-                    <p id="uploadStatus">Uploading...</p>
-                </div>
-                <div class="meta-preview" id="metaPreview" hidden></div>
-            </div>
-
-            <!-- STEP 2: LANGUAGE -->
-            <div class="wiz-panel" data-panel="2">
-                <h3 class="wiz-title">🌐 Language</h3>
-                <p class="wiz-desc">Choose transcript & subtitle language. AI recommends Auto Detect.</p>
-                <div class="form-group">
-                    <label>Transcript Language</label>
-                    <select id="langTranscript">
-                        <option value="auto">🔍 Auto Detect</option>
-                        <option value="en">English</option>
-                        <option value="hi">Hindi</option>
-                        <option value="hinglish">Hinglish (Hindi)</option>
-                        <option value="bn">Bengali</option>
-                        <option value="ta">Tamil</option>
-                        <option value="te">Telugu</option>
-                        <option value="mr">Marathi</option>
-                        <option value="ur">Urdu</option>
-                        <option value="gu">Gujarati</option>
-                        <option value="kn">Kannada</option>
-                        <option value="ml">Malayalam</option>
-                        <option value="pa">Punjabi</option>
-                        <option value="es">Spanish</option>
-                        <option value="fr">French</option>
-                        <option value="de">German</option>
-                        <option value="it">Italian</option>
-                        <option value="pt">Portuguese</option>
-                        <option value="ar">Arabic</option>
-                        <option value="ja">Japanese</option>
-                        <option value="ko">Korean</option>
-                        <option value="zh">Chinese</option>
-                        <option value="ru">Russian</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Subtitle Language (translation)</label>
-                    <select id="langSubtitle">
-                        <option value="auto">Same as transcript</option>
-                        <option value="en">English</option>
-                        <option value="hi">Hindi</option>
-                        <option value="hinglish">Hinglish (Hindi)</option>
-                        <option value="bn">Bengali</option>
-                        <option value="ta">Tamil</option>
-                        <option value="te">Telugu</option>
-                        <option value="mr">Marathi</option>
-                        <option value="es">Spanish</option>
-                        <option value="fr">French</option>
-                        <option value="de">German</option>
-                        <option value="ar">Arabic</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="subtitleEnabled" checked> Burn subtitles into final video
-                    </label>
-                </div>
-            </div>
-
-            <!-- STEP 3: ASPECT RATIO -->
-            <div class="wiz-panel" data-panel="3">
-                <h3 class="wiz-title">📐 Aspect Ratio</h3>
-                <p class="wiz-desc">Choose the output format. AI uses smart cropping — no stretching.</p>
-                <div class="option-grid">
-                    <label class="option-card">
-                        <input type="radio" name="aspect" value="9:16">
-                        <div class="ratio-box r-916"></div>
-                        <div class="option-label">9:16</div>
-                        <div class="option-sub">Shorts / Reels</div>
-                    </label>
-                    <label class="option-card">
-                        <input type="radio" name="aspect" value="16:9">
-                        <div class="ratio-box r-169"></div>
-                        <div class="option-label">16:9</div>
-                        <div class="option-sub">YouTube / Landscape</div>
-                    </label>
-                    <label class="option-card">
-                        <input type="radio" name="aspect" value="1:1">
-                        <div class="ratio-box r-11"></div>
-                        <div class="option-label">1:1</div>
-                        <div class="option-sub">Square</div>
-                    </label>
-                    <label class="option-card">
-                        <input type="radio" name="aspect" value="original" checked>
-                        <div class="ratio-box r-orig"></div>
-                        <div class="option-label">Original</div>
-                        <div class="option-sub">Keep source ratio</div>
-                    </label>
-                </div>
-            </div>
-
-            <!-- STEP 4: CLIPPING -->
-            <div class="wiz-panel" data-panel="4">
-                <h3 class="wiz-title">✂️ Clipping Options</h3>
-                <p class="wiz-desc">Who should decide the clipping?</p>
-                <div class="option-grid vertical">
-                    <label class="option-card">
-                        <input type="radio" name="clipmode" value="ai" checked>
-                        <div class="option-label">🤖 AI decides</div>
-                        <div class="option-sub">AI finds the best moments, duration & count automatically.</div>
-                    </label>
-                    <label class="option-card">
-                        <input type="radio" name="clipmode" value="duration">
-                        <div class="option-label">⏱️ I decide clip duration</div>
-                        <div class="option-sub">Set how many seconds each clip should be.</div>
-                    </label>
-                    <label class="option-card">
-                        <input type="radio" name="clipmode" value="count">
-                        <div class="option-label">🔢 I decide number of clips</div>
-                        <div class="option-sub">Set how many clips you want. AI adjusts durations.</div>
-                    </label>
+        <div class="app-main">
+            <!-- Sidebar Navigation -->
+            <aside class="app-sidebar" id="appSidebar">
+                <div class="sidebar-header">
+                    <a href="/dashboard" class="sidebar-new-btn">
+                        <svg data-lucide="plus" width="16" height="16"></svg>
+                        <span>New Project</span>
+                    </a>
                 </div>
 
-                <!-- Duration settings -->
-                <div id="durationSettings" class="conditional" hidden>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Clip Duration (seconds)</label>
-                            <input type="number" id="clipDuration" min="5" max="300" value="30">
+                <nav class="sidebar-nav">
+                    <div class="nav-section-label">Workspaces</div>
+                    <a href="/" class="sidebar-item" data-tooltip="Home & Projects">
+                        <div class="sidebar-icon"><svg data-lucide="house" width="18" height="18"></svg></div>
+                        <span class="sidebar-label">Home & Projects</span>
+                    </a>
+                    <a href="/dashboard" class="sidebar-item active" data-tooltip="AI Clip Studio">
+                        <div class="sidebar-icon"><svg data-lucide="wand-sparkles" width="18" height="18"></svg></div>
+                        <span class="sidebar-label">AI Clip Studio</span>
+                    </a>
+                    <a href="/caption-studio" class="sidebar-item" data-tooltip="Caption Studio">
+                        <div class="sidebar-icon"><svg data-lucide="captions" width="18" height="18"></svg></div>
+                        <span class="sidebar-label">Caption Studio</span>
+                    </a>
+                    <a href="/studio" class="sidebar-item" data-tooltip="Studio Hub">
+                        <div class="sidebar-icon"><svg data-lucide="shapes" width="18" height="18"></svg></div>
+                        <span class="sidebar-label">Studio Hub</span>
+                    </a>
+                    <a href="/yt-downloader" class="sidebar-item" data-tooltip="YT Downloader">
+                        <div class="sidebar-icon"><svg data-lucide="download" width="18" height="18"></svg></div>
+                        <span class="sidebar-label">Downloader</span>
+                    </a>
+                    <a href="/youtube-desk" class="sidebar-item" data-tooltip="YouTube Automation">
+                        <div class="sidebar-icon"><svg data-lucide="tv" width="18" height="18"></svg></div>
+                        <span class="sidebar-label">YouTube Desk</span>
+                    </a>
+
+                    <div class="nav-section-label" style="margin-top: 12px;">Resources</div>
+                    <a href="/guide" class="sidebar-item" data-tooltip="User Guide">
+                        <div class="sidebar-icon"><svg data-lucide="book-open" width="18" height="18"></svg></div>
+                        <span class="sidebar-label">How to Use</span>
+                    </a>
+                </nav>
+
+                <div class="sidebar-footer">
+                    <button class="sidebar-toggle-btn" id="sidebarToggle" data-tooltip="Collapse / Expand Sidebar">
+                        <svg data-lucide="panel-left-close" width="18" height="18"></svg>
+                        <span class="sidebar-label">Collapse</span>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main Workspace Container -->
+            <main class="app-workspace">
+                <div class="workspace-content" style="max-width: 100%; width: 100%;">
+                    
+                    <!-- Top Workspace Header -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+                        <div>
+                            <h1 style="font-family: var(--font-heading); font-size: 24px; font-weight: 800; color: var(--text-primary); margin-bottom: 2px;">AI Clip Studio</h1>
+                            <p style="color: var(--text-secondary); font-size: 13px;">Analyze long-form video, detect highlights, and generate captioned short-form clips.</p>
                         </div>
-                        <div class="form-group">
-                            <label>How many clips?</label>
-                            <select id="clipCountMode">
-                                <option value="all">All possible clips</option>
-                                <option value="custom">Custom number</option>
-                            </select>
+                        <div id="activeProjectBadge" class="card" style="padding: 6px 12px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; background: var(--surface-1); border-color: var(--border-strong);">
+                            <span class="brand-dot"></span>
+                            <span id="projectNameText">New Project</span>
                         </div>
                     </div>
-                    <div class="form-group" id="customCountWrap" hidden>
-                        <label>Number of clips</label>
-                        <input type="number" id="customCount" min="1" max="100" value="5">
-                    </div>
-                </div>
 
-                <!-- Count settings -->
-                <div id="countSettings" class="conditional" hidden>
-                    <div class="form-group">
-                        <label>How many clips do you want?</label>
-                        <input type="number" id="clipCount" min="1" max="100" value="5">
-                    </div>
-                </div>
-            </div>
-
-            <!-- STEP 5: NAMING -->
-            <div class="wiz-panel" data-panel="5">
-                <h3 class="wiz-title">🏷️ Clip Naming</h3>
-                <p class="wiz-desc">How should clips be named?</p>
-                <div class="option-grid vertical">
-                    <label class="option-card">
-                        <input type="radio" name="naming" value="content">
-                        <div class="option-label">📝 Content-based names</div>
-                        <div class="option-sub">e.g. AI_Video_Editing_Tips.mp4</div>
-                    </label>
-                    <label class="option-card">
-                        <input type="radio" name="naming" value="sequential" checked>
-                        <div class="option-label">🔢 Sequential names</div>
-                        <div class="option-sub">e.g. clip_001.mp4, clip_002.mp4</div>
-                    </label>
-                </div>
-            </div>
-
-<!-- STEP 6: CAPTIONS -->
-            <div class="wiz-panel" data-panel="6">
-                <h3 class="wiz-title">💬 Animated Captions</h3>
-                <p class="wiz-desc">Add short-form animated captions (word-by-word karaoke) to a separate video render.</p>
-
-                <div class="form-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="captionEnabled"> Enable animated captions
-                    </label>
-                    <p class="quality-hint">Burns word-by-word animated captions into a separate caption video.</p>
-                </div>
-
-                <div id="captionOptions" class="caption-options" hidden>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Template</label>
-                            <select id="captionTemplate">
-                                <option value="viral">Trending Viral</option>
-                                <option value="social">Social Reel</option>
-                                <option value="creator">Creator Glow</option>
-                                <option value="dynamic">Dynamic Punch</option>
-                                <option value="bold">Bold</option>
-                                <option value="minimal">Minimal</option>
-                                <option value="highlight">Highlight</option>
-                                <option value="karaoke">Karaoke</option>
-                                <option value="modern">Modern</option>
-                                <option value="clean">Clean</option>
-                                <option value="classic">Classic</option>
-                                <option value="word_by_word">Word-by-Word</option>
-                                <option value="pop">Pop</option>
-                                <option value="bounce">Bounce</option>
-                                <option value="typewriter">Typewriter</option>
-                                <option value="emphasis">Emphasis</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Animation Style</label>
-                            <select id="captionAnimation">
-                                <option value="pop">Pop</option>
-                                <option value="fade">Fade</option>
-                                <option value="bounce">Bounce</option>
-                                <option value="slide">Slide</option>
-                                <option value="zoom">Zoom</option>
-                                <option value="scale">Scale</option>
-                                <option value="typewriter">Typewriter</option>
-                                <option value="highlight">Highlight</option>
-                                <option value="karaoke">Karaoke</option>
-                                <option value="punch">Punch</option>
-                                <option value="smooth_reveal">Smooth Reveal</option>
-                                <option value="word_by_word">Word-by-Word</option>
-                                <option value="character_by_character">Character-by-Character</option>
-                                <option value="none">None</option>
-                            </select>
+                    <!-- Studio Loader Overlay -->
+                    <div class="studio-loader-overlay" id="studioLoader" hidden>
+                        <div class="studio-loader-content">
+                            <div class="spinner large"></div>
+                            <p class="studio-loader-text">Loading your Studio…</p>
                         </div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Font</label>
-                            <select id="captionFont">
-                                <option value="Arial">Arial</option>
-                                <option value="Arial Black">Arial Black</option>
-                                <option value="Inter">Inter</option>
-                                <option value="Roboto">Roboto</option>
-                                <option value="Poppins">Poppins</option>
-                                <option value="Montserrat">Montserrat</option>
-                                <option value="Anton">Anton</option>
-                                <option value="Bebas Neue">Bebas Neue</option>
-                                <option value="Oswald">Oswald</option>
-                                <option value="Space Grotesk">Space Grotesk</option>
-                                <option value="Outfit">Outfit</option>
-                                <option value="Manrope">Manrope</option>
-                                <option value="DM Sans">DM Sans</option>
-                                <option value="Archivo">Archivo</option>
-                                <option value="Plus Jakarta Sans">Plus Jakarta Sans</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Font Size</label>
-                            <input type="number" id="captionSize" min="10" max="120" value="34">
+
+                    <!-- Streamlined Progress Indicator (Steps 3-6 collapsed/hidden in UI logic) -->
+                    <div class="card" style="padding: var(--space-3) var(--space-4); margin-bottom: var(--space-4);">
+                        <div class="wizard-steps" style="display: flex; justify-content: space-between; border-bottom: none; padding-bottom: 0;">
+                            <div class="wiz-step active" data-wiz="1"><div class="wiz-num">1</div><span>Import Video</span></div>
+                            <div class="wiz-step" data-wiz="2"><div class="wiz-num">2</div><span>AI Configuration</span></div>
+                            <!-- Hidden intermediate steps to preserve JS mapping -->
+                            <div class="wiz-step" data-wiz="3" style="display:none;"><div class="wiz-num">3</div><span>Aspect</span></div>
+                            <div class="wiz-step" data-wiz="4" style="display:none;"><div class="wiz-num">4</div><span>Clipping</span></div>
+                            <div class="wiz-step" data-wiz="5" style="display:none;"><div class="wiz-num">5</div><span>Naming</span></div>
+                            <div class="wiz-step" data-wiz="6" style="display:none;"><div class="wiz-num">6</div><span>Captions</span></div>
+                            <div class="wiz-step" data-wiz="7"><div class="wiz-num">7</div><span>AI Processing</span></div>
+                            <div class="wiz-step" data-wiz="8"><div class="wiz-num">8</div><span>Review Clips</span></div>
+                            <div class="wiz-step" data-wiz="9"><div class="wiz-num">9</div><span>Export Outputs</span></div>
                         </div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Text Color</label>
-                            <input type="color" id="captionColor" value="#FFFFFF">
+
+                    <!-- TWO-COLUMN WORKSPACE GRID -->
+                    <div class="studio-workspace-grid">
+                        
+                        <!-- LEFT PANE: Media Player, Upload Target, Processing State, Results Grid -->
+                        <div class="studio-left-pane">
+                            
+                            <!-- PANEL 1: UPLOAD / IMPORT SOURCE -->
+                            <div class="wiz-panel active" data-panel="1">
+                                <div class="upload-card" id="uploadZone" style="height: 380px;">
+                                    <div class="upload-vector-wrapper">
+                                        <!-- Minimal Vector Design for Upload -->
+                                        <svg class="upload-vector-svg" viewBox="0 0 100 100" width="80" height="80">
+                                            <rect x="20" y="20" width="60" height="60" rx="10" stroke="var(--border-strong)" stroke-width="1.5" fill="none"></rect>
+                                            <circle cx="50" cy="45" r="10" stroke="var(--border-strong)" stroke-width="1.5" fill="none"></circle>
+                                            <path d="M30 75 C 40 60, 45 65, 55 55 C 65 65, 70 70, 70 75" stroke="var(--border-strong)" stroke-width="1.5" fill="none"></path>
+                                            <line x1="50" y1="20" x2="50" y2="10" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"></line>
+                                            <polyline points="45 15 50 10 55 15" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                                        </svg>
+                                    </div>
+                                    <div class="upload-title" style="margin-top: var(--space-4);">Drop your video to import</div>
+                                    <div class="upload-sub">Supports MP4, MOV, MKV, WebM up to 1GB</div>
+                                    <button class="btn btn-primary btn-sm" id="browseBtn" type="button" style="margin-top: var(--space-3);"><svg data-lucide="folder-open" width="14" height="14"></svg> Browse Files</button>
+                                    <input type="file" id="videoInput" accept="video/*" hidden>
+                                </div>
+                                <div class="upload-progress" id="uploadProgress" hidden>
+                                    <div class="progress-bar"><div class="progress-fill" id="uploadFill"></div></div>
+                                    <div class="upload-status" id="uploadStatus">Uploading...</div>
+                                </div>
+                                <div class="meta-preview" id="metaPreview" hidden></div>
+                            </div>
+
+                            <!-- SOURCE VIDEO WORKSPACE (Visible on Step 2 Config) -->
+                            <div class="wiz-panel" data-panel="2">
+                                <div class="source-video-container" id="sourceVideoContainer">
+                                    <video id="sourceVideoPlayer" class="source-video-player" src="" preload="metadata"></video>
+                                    <!-- Custom Video Controls -->
+                                    <div class="custom-video-controls">
+                                        <button class="control-btn" id="videoPlayPause" data-tooltip="Play / Pause" type="button">
+                                            <svg data-lucide="play" width="16" height="16" class="play-icon"></svg>
+                                            <svg data-lucide="pause" width="16" height="16" class="pause-icon" style="display:none;"></svg>
+                                        </button>
+                                        
+                                        <div class="video-timeline-wrap">
+                                            <input type="range" class="video-scrubber" id="videoScrubber" min="0" max="100" value="0">
+                                        </div>
+                                        
+                                        <div class="video-time-display">
+                                            <span id="videoCurrentTime" style="font-family: var(--font-mono);">00:00</span> / <span id="videoDuration" style="font-family: var(--font-mono);">00:00</span>
+                                        </div>
+                                        
+                                        <div class="video-volume-wrap">
+                                            <button class="control-btn" id="videoMute" data-tooltip="Mute / Unmute" type="button">
+                                                <svg data-lucide="volume-2" width="16" height="16" class="volume-icon"></svg>
+                                                <svg data-lucide="volume-x" width="16" height="16" class="mute-icon" style="display:none;"></svg>
+                                            </button>
+                                            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="80">
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Video Info Bar -->
+                                    <div class="source-meta-bar" id="sourceMetaBar">
+                                        <span id="metaFilename">-</span>
+                                        <span class="meta-dot">·</span>
+                                        <span id="metaResolution">-</span>
+                                        <span class="meta-dot">·</span>
+                                        <span id="metaFPS">-</span>
+                                        <span class="meta-dot">·</span>
+                                        <span id="metaSize">-</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- PANEL 7: AI PIPELINE ANALYSIS -->
+                            <div class="wiz-panel" data-panel="7">
+                                <!-- Premium AI processing visual graphic -->
+                                <div class="ai-visual-loading" id="aiVisualLoading">
+                                    <div class="ai-stars">
+                                        <span class="ai-star">✦</span>
+                                        <span class="ai-star primary">✦</span>
+                                        <span class="ai-star">✦</span>
+                                    </div>
+                                    <div class="ai-geometric-pulse">
+                                        <div class="pulse-ring r1"></div>
+                                        <div class="pulse-ring r2"></div>
+                                        <div class="pulse-ring r3"></div>
+                                        <div class="axis horizontal"></div>
+                                        <div class="axis vertical"></div>
+                                        <div class="center-dot"></div>
+                                    </div>
+                                    <div class="ai-pulse-status">AI is analyzing your video...</div>
+                                </div>
+
+                                <div class="summary-card" id="settingsSummary" style="margin-bottom: var(--space-4);"></div>
+
+                                <div class="pipeline-progress-wrap" id="pipelineWrap" hidden>
+                                    <div class="pipeline-progress-bar">
+                                        <div class="pipeline-progress-fill" id="pipelineFill"></div>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                                        <div class="pipeline-percent" id="pipelinePercent">0%</div>
+                                        <div class="pipeline-timer" id="pipelineTimerWrap">
+                                            <svg data-lucide="timer" width="14" height="14"></svg>
+                                            <span id="pipelineTimer" style="font-family: var(--font-mono);">0:00</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="steps" id="stepsContainer">
+                                    <div class="step" data-step="1"><div class="step-num">1</div><span>FFmpeg</span></div>
+                                    <div class="step" data-step="2"><div class="step-num">2</div><span>Load</span></div>
+                                    <div class="step" data-step="3"><div class="step-num">3</div><span>Frames</span></div>
+                                    <div class="step" data-step="4"><div class="step-num">4</div><span>Scenes</span></div>
+                                    <div class="step" data-step="5"><div class="step-num">5</div><span>Merge</span></div>
+                                    <div class="step" data-step="6"><div class="step-num">6</div><span>Clips</span></div>
+                                    <div class="step" data-step="7"><div class="step-num">7</div><span>Whisper</span></div>
+                                    <div class="step" data-step="8"><div class="step-num">8</div><span>Subs</span></div>
+                                    <div class="step" data-step="9"><div class="step-num">9</div><span>Render</span></div>
+                                </div>
+
+                                <div class="log-container">
+                                    <div class="log-header">Pipeline Execution Log</div>
+                                    <div class="log-body" id="logBody">
+                                        <div class="log-line muted">Waiting for pipeline execution...</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- PANEL 8: REVIEW GENERATED CLIPS -->
+                            <div class="wiz-panel" data-panel="8">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4); border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+                                    <div style="display: flex; align-items: center; gap: var(--space-2);">
+                                        <h3 style="font-size: 16px; font-weight: 700;">Generated Clips</h3>
+                                        <button class="btn btn-secondary btn-icon" id="refreshClipsBtn" data-tooltip="Refresh Clip List" type="button" style="padding: 4px; border-radius: var(--radius-xs);">
+                                            <svg data-lucide="refresh-cw" width="14" height="14"></svg>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Select Options -->
+                                    <div style="display: flex; gap: var(--space-2); align-items: center;">
+                                        <button class="btn btn-secondary btn-sm" id="selectAllClipsBtn" type="button">Select All</button>
+                                        <button class="btn btn-secondary btn-sm" id="clearClipSelectionBtn" type="button">Clear Selection</button>
+                                    </div>
+                                </div>
+
+                                <!-- Batch Actions Bar (Slides in when clips are checked) -->
+                                <div class="batch-actions-bar" id="batchActionsBar" style="display: none; margin-bottom: var(--space-4);">
+                                    <span class="selected-count" id="selectedCountText">0 clips selected</span>
+                                    <div class="batch-buttons">
+                                        <button class="btn btn-secondary btn-sm" id="batchOpenEditorBtn" type="button"><svg data-lucide="scissors" width="14" height="14"></svg> Open in Editor</button>
+                                        <button class="btn btn-secondary btn-sm" id="batchDownloadBtn" type="button"><svg data-lucide="download" width="14" height="14"></svg> Export</button>
+                                        <button class="btn btn-secondary btn-sm danger" id="batchDeleteBtn" type="button"><svg data-lucide="trash" width="14" height="14"></svg> Delete</button>
+                                    </div>
+                                </div>
+
+                                <div class="clips-grid" id="reviewGrid"></div>
+                                <div id="countConflict" class="conflict-banner" hidden></div>
+                            </div>
+
+                            <!-- PANEL 9: EXPORT GENERATED ASSETS -->
+                            <div class="wiz-panel" data-panel="9">
+                                <div class="card quality-card">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label>Export Quality</label>
+                                            <select id="exportQuality">
+                                                <option value="original">Original</option>
+                                                <option value="1080p">1080p Full HD</option>
+                                                <option value="720p">720p HD</option>
+                                                <option value="360p">360p</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group" style="justify-content: flex-end;">
+                                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                                <button class="btn btn-download" id="downloadAllBtn"><svg data-lucide="download" width="14" height="14"></svg> Download All (ZIP)</button>
+                                                <button class="btn btn-download" id="exportQualityBtn"><svg data-lucide="sliders-horizontal" width="14" height="14"></svg> Export Selected Quality</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="grid-2 export-row" style="margin-top: 16px;">
+                                    <div class="card">
+                                        <h3 class="card-title"><svg data-lucide="file-text" width="18" height="18" style="color:var(--primary);"></svg>Subtitle Files</h3>
+                                        <div class="download-list" id="subtitleList"></div>
+                                    </div>
+                                    <div class="card">
+                                        <h3 class="card-title"><svg data-lucide="file-edit" width="18" height="18" style="color:var(--primary);"></svg>Transcript</h3>
+                                        <div class="download-list" id="transcriptList"></div>
+                                    </div>
+                                </div>
+
+                                <div class="card" style="margin-top: 16px;">
+                                    <h3 class="card-title"><svg data-lucide="notebook-pen" width="18" height="18" style="color:var(--primary);"></svg>Transcript Preview</h3>
+                                    <div class="transcript-view" id="transcriptView"></div>
+                                </div>
+                            </div>
+
                         </div>
-                        <div class="form-group">
-                            <label>Background / Outline</label>
-                            <input type="color" id="captionBackground" value="#000000">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Outline Width</label>
-                            <input type="number" id="captionOutline" min="0" max="10" value="3">
-                        </div>
-                        <div class="form-group">
-                            <label>Position</label>
-                            <select id="captionPosition">
-                                <option value="bottom">Bottom</option>
-                                <option value="top">Top</option>
-                                <option value="middle">Middle</option>
-                                <option value="safe_bottom">Safe Bottom</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- STEP 7: GENERATE -->
-            <div class="wiz-panel" data-panel="7">
-                <h3 class="wiz-title">🚀 Generate Clips</h3>
-                <p class="wiz-desc">Review your settings, then start the AI pipeline.</p>
+                        <!-- RIGHT PANE: AI Side Panel Configurations (Only visible for Panel 2) -->
+                        <div class="studio-right-pane">
+                            <div class="studio-settings-sidebar">
+                                <h3 style="font-size: 15px; font-weight: 700; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: var(--space-3); color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                                    <svg data-lucide="sliders" width="16" height="16" style="color:var(--primary);"></svg>
+                                    <span>AI Clip Settings</span>
+                                </h3>
 
-                <div class="summary-card" id="settingsSummary"></div>
+                                <div class="settings-scroll-area">
+                                    <!-- Aspect Ratio Settings -->
+                                    <div class="settings-group-card">
+                                        <h4 class="settings-group-title">Aspect Ratio</h4>
+                                        <div class="option-grid">
+                                            <label class="option-card">
+                                                <input type="radio" name="aspect" value="9:16">
+                                                <div class="ratio-box r-916"></div>
+                                                <div class="option-label">9:16</div>
+                                                <div class="option-sub">Reels / Shorts</div>
+                                            </label>
+                                            <label class="option-card">
+                                                <input type="radio" name="aspect" value="16:9">
+                                                <div class="ratio-box r-169"></div>
+                                                <div class="option-label">16:9</div>
+                                                <div class="option-sub">YouTube</div>
+                                            </label>
+                                            <label class="option-card">
+                                                <input type="radio" name="aspect" value="1:1">
+                                                <div class="ratio-box r-11"></div>
+                                                <div class="option-label">1:1</div>
+                                                <div class="option-sub">Square</div>
+                                            </label>
+                                            <label class="option-card">
+                                                <input type="radio" name="aspect" value="original" checked>
+                                                <div class="ratio-box r-orig"></div>
+                                                <div class="option-label">Original</div>
+                                                <div class="option-sub">Source</div>
+                                            </label>
+                                        </div>
+                                    </div>
 
-<div class="pipeline-progress-wrap" id="pipelineWrap" hidden>
-                    <div class="pipeline-progress-bar">
-                        <div class="pipeline-progress-fill" id="pipelineFill"></div>
-                    </div>
-                    <div class="pipeline-percent" id="pipelinePercent">0%</div>
-                    <div class="pipeline-timer" id="pipelineTimerWrap">
-                        <span class="timer-label">⏱</span>
-                        <span id="pipelineTimer">0:00</span>
-                    </div>
-                </div>
+                                    <!-- Clipping Strategy Settings -->
+                                    <div class="settings-group-card">
+                                        <h4 class="settings-group-title">Clipping Options</h4>
+                                        <div class="option-grid vertical">
+                                            <label class="option-card">
+                                                <input type="radio" name="clipmode" value="ai" checked>
+                                                <div class="option-label"><svg data-lucide="bot" width="14" height="14" style="margin-right:6px;"></svg>AI Auto Decisions</div>
+                                                <div class="option-sub">AI finds highlight moments & clip durations.</div>
+                                            </label>
+                                            <label class="option-card">
+                                                <input type="radio" name="clipmode" value="duration">
+                                                <div class="option-label"><svg data-lucide="timer" width="14" height="14" style="margin-right:6px;"></svg>Fixed Clip Duration</div>
+                                                <div class="option-sub">Specify exact target seconds for each clip.</div>
+                                            </label>
+                                            <label class="option-card">
+                                                <input type="radio" name="clipmode" value="count">
+                                                <div class="option-label"><svg data-lucide="hash" width="14" height="14" style="margin-right:6px;"></svg>Target Clip Count</div>
+                                                <div class="option-sub">Specify total number of clips to generate.</div>
+                                            </label>
+                                        </div>
 
-                <div class="steps" id="stepsContainer">
-                    <div class="step" data-step="1"><div class="step-num">1</div><span>FFmpeg</span></div>
-                    <div class="step" data-step="2"><div class="step-num">2</div><span>Load</span></div>
-                    <div class="step" data-step="3"><div class="step-num">3</div><span>Frames</span></div>
-                    <div class="step" data-step="4"><div class="step-num">4</div><span>Scenes</span></div>
-                    <div class="step" data-step="5"><div class="step-num">5</div><span>Merge</span></div>
-                    <div class="step" data-step="6"><div class="step-num">6</div><span>Clips</span></div>
-                    <div class="step" data-step="7"><div class="step-num">7</div><span>Whisper</span></div>
-                    <div class="step" data-step="8"><div class="step-num">8</div><span>Subs</span></div>
-                    <div class="step" data-step="9"><div class="step-num">9</div><span>Render</span></div>
-                </div>
+                                        <!-- Conditional Fields -->
+                                        <div id="durationSettings" class="conditional" hidden style="margin-top: var(--space-3);">
+                                            <div class="form-row">
+                                                <div class="form-group">
+                                                    <label>Clip Duration (s)</label>
+                                                    <input type="number" id="clipDuration" min="5" max="300" value="30">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Clip Count</label>
+                                                    <select id="clipCountMode">
+                                                        <option value="all">All possible</option>
+                                                        <option value="custom">Custom count</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group" id="customCountWrap" hidden style="margin-top: 10px;">
+                                                <label>Number of clips</label>
+                                                <input type="number" id="customCount" min="1" max="100" value="5">
+                                            </div>
+                                        </div>
 
-                <div class="log-container">
-                    <div class="log-header">Pipeline Log</div>
-                    <div class="log-body" id="logBody">
-                        <div class="log-line muted">Waiting for pipeline to start...</div>
-                    </div>
-                </div>
-            </div>
+                                        <div id="countSettings" class="conditional" hidden style="margin-top: var(--space-3);">
+                                            <div class="form-group">
+                                                <label>How many clips do you want?</label>
+                                                <input type="number" id="clipCount" min="1" max="100" value="5">
+                                            </div>
+                                        </div>
+                                    </div>
 
-            <!-- STEP 8: REVIEW -->
-            <div class="wiz-panel" data-panel="8">
-                <h3 class="wiz-title">👀 Review Clips</h3>
-                <p class="wiz-desc">Preview, rename, or delete each finished clip before export. These are generated clips only — the original source video is not shown here.</p>
-                <div class="clips-grid" id="reviewGrid"></div>
-                <div id="countConflict" class="conflict-banner" hidden></div>
-            </div>
+                                    <!-- Language & Translation Settings -->
+                                    <div class="settings-group-card">
+                                        <h4 class="settings-group-title">Language & Subtitles</h4>
+                                        <div class="form-group">
+                                            <label>Spoken Language</label>
+                                            <select id="langTranscript">
+                                                <option value="auto" selected>Auto Detect</option>
+                                                <option value="en">English</option>
+                                                <option value="hi">Hindi</option>
+                                                <option value="es">Spanish</option>
+                                                <option value="fr">French</option>
+                                                <option value="de">German</option>
+                                                <option value="ar">Arabic</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group" style="margin-top: 10px;">
+                                            <label>Translate Subtitles</label>
+                                            <select id="langSubtitle">
+                                                <option value="auto" selected>None (Keep original)</option>
+                                                <option value="en">English</option>
+                                                <option value="hi">Hindi</option>
+                                                <option value="es">Spanish</option>
+                                                <option value="fr">French</option>
+                                                <option value="de">German</option>
+                                                <option value="ar">Arabic</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group" style="margin-top: 12px;">
+                                            <label class="checkbox-label">
+                                                <input type="checkbox" id="subtitleEnabled" checked> Burn subtitles into final video
+                                            </label>
+                                        </div>
+                                    </div>
 
-<!-- STEP 9: EXPORT -->
-            <div class="wiz-panel" data-panel="9">
-                <h3 class="wiz-title">📦 Export</h3>
-                <p class="wiz-desc">Download your final edited clips and export the selected quality.</p>
+                                    <!-- Animated Caption presets -->
+                                    <div class="settings-group-card">
+                                        <h4 class="settings-group-title">Animated Captions</h4>
+                                        <div class="form-group">
+                                            <label class="checkbox-label">
+                                                <input type="checkbox" id="captionEnabled"> Enable animated captions
+                                            </label>
+                                        </div>
+                                        
+                                        <div id="captionOptions" class="caption-options" hidden style="margin-top: 10px;">
+                                            <div class="form-group" style="margin-bottom: 10px;">
+                                                <label>Caption Style Preset</label>
+                                                <select id="captionStylePreset">
+                                                    <option value="">None (default)</option>
+                                                    {% for preset in caption_presets %}
+                                                    <option value="{{ preset.key }}">{{ preset.name }} ({{ preset.category }})</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
 
-                <!-- Quality Control + Download All -->
-                <div class="card quality-card">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Export Quality</label>
-                            <select id="exportQuality">
-                                <option value="original">Original</option>
-                                <option value="360p">360p</option>
-                                <option value="720p">720p</option>
-                                <option value="1080p">1080p</option>
-                            </select>
-                            <p class="quality-hint">Applies to each finished clip export.</p>
-                        </div>
-                        <div class="form-group">
-                            <label>Actions</label>
-                            <div class="quality-actions">
-                                <button class="btn btn-download" id="downloadAllBtn">⬇ Download All Clips (ZIP)</button>
-                                <button class="btn btn-download" id="exportQualityBtn">⬇ Export Selected Quality</button>
+                                            <div class="form-row">
+                                                <div class="form-group">
+                                                    <label>Template</label>
+                                                    <select id="captionTemplate">
+                                                        <option value="viral">Trending Viral</option>
+                                                        <option value="social">Social Reel</option>
+                                                        <option value="creator">Creator Glow</option>
+                                                        <option value="dynamic">Dynamic Punch</option>
+                                                        <option value="bold">Bold</option>
+                                                        <option value="minimal">Minimal</option>
+                                                        <option value="highlight">Highlight</option>
+                                                        <option value="karaoke">Karaoke</option>
+                                                    </select>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Animation</label>
+                                                    <select id="captionAnimation">
+                                                        <option value="pop">Pop</option>
+                                                        <option value="fade">Fade</option>
+                                                        <option value="bounce">Bounce</option>
+                                                        <option value="slide">Slide</option>
+                                                        <option value="karaoke">Karaoke</option>
+                                                        <option value="none">None</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-row" style="margin-top: 10px;">
+                                                <div class="form-group">
+                                                    <label>Font</label>
+                                                    <select id="captionFont">
+                                                        <option value="Arial">Arial</option>
+                                                        <option value="Arial Black">Arial Black</option>
+                                                        <option value="Inter">Inter</option>
+                                                        <option value="Manrope">Manrope</option>
+                                                        <option value="Poppins">Poppins</option>
+                                                        <option value="Montserrat">Montserrat</option>
+                                                        <option value="Bebas Neue">Bebas Neue</option>
+                                                    </select>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Font Size</label>
+                                                    <input type="number" id="captionSize" min="10" max="120" value="34">
+                                                </div>
+                                            </div>
+                                            <div class="form-row" style="margin-top: 10px;">
+                                                <div class="form-group">
+                                                    <label>Text Color</label>
+                                                    <input type="color" id="captionColor" value="#FFFFFF" style="height:32px; padding:2px; cursor:pointer;">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Outline Color</label>
+                                                    <input type="color" id="captionBackground" value="#000000" style="height:32px; padding:2px; cursor:pointer;">
+                                                </div>
+                                            </div>
+                                            <div class="form-row" style="margin-top: 10px;">
+                                                <div class="form-group">
+                                                    <label>Outline Width</label>
+                                                    <input type="number" id="captionOutline" min="0" max="10" value="3">
+                                                </div>
+                                                <div class="form-group">
+                                                    <label>Position</label>
+                                                    <select id="captionPosition">
+                                                        <option value="bottom">Bottom</option>
+                                                        <option value="middle">Middle</option>
+                                                        <option value="top">Top</option>
+                                                        <option value="safe_bottom">Safe Bottom</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Naming Options -->
+                                    <div class="settings-group-card">
+                                        <h4 class="settings-group-title">Clip Naming</h4>
+                                        <div class="option-grid vertical">
+                                            <label class="option-card">
+                                                <input type="radio" name="naming" value="content">
+                                                <div class="option-label"><svg data-lucide="type" width="14" height="14" style="margin-right:6px;"></svg>Content-based</div>
+                                                <div class="option-sub">e.g. AI_Video_Editing_Tips.mp4</div>
+                                            </label>
+                                            <label class="option-card">
+                                                <input type="radio" name="naming" value="sequential" checked>
+                                                <div class="option-label"><svg data-lucide="hash" width="14" height="14" style="margin-right:6px;"></svg>Sequential</div>
+                                                <div class="option-sub">e.g. AI_Spark_Clip_001.mp4</div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+
                     </div>
-                </div>
 
-                <!-- Downloads -->
-                <div class="grid-2 export-row">
-                    <div class="card">
-                        <h3 class="card-title">📄 Subtitle Files</h3>
-                        <div class="download-list" id="subtitleList"></div>
+                    <!-- Wizard Navigation Buttons (Pinned to Bottom Row) -->
+                    <div class="wizard-nav" style="margin-top: var(--space-6); padding-top: var(--space-4); border-top: 1px solid var(--border); display: flex; justify-content: space-between;">
+                        <button class="btn btn-secondary" id="wizPrev" hidden>← Back</button>
+                        <button class="btn btn-primary" id="wizNext">Continue →</button>
                     </div>
-                    <div class="card">
-                        <h3 class="card-title">📝 Transcript</h3>
-                        <div class="download-list" id="transcriptList"></div>
-                    </div>
+
                 </div>
-
-                <!-- Transcript Viewer -->
-                <div class="card">
-                    <h3 class="card-title">🗒️ Transcript Preview</h3>
-                    <div class="transcript-view" id="transcriptView"></div>
-                </div>
-            </div>
-
-            <!-- Wizard Nav Buttons -->
-            <div class="wizard-nav">
-                <button class="btn btn-secondary" id="wizPrev" hidden>← Back</button>
-                <button class="btn btn-primary" id="wizNext">Continue →</button>
-            </div>
-        </section>
-    </main>
-
-    <!-- Confirmation Modal -->
-<div class="modal-overlay" id="confirmModal" hidden>
-        <div class="modal">
-            <button class="modal-close" id="confirmClose" aria-label="Close">✕</button>
-            <h3>Clip Count Adjustment</h3>
-            <p id="confirmText">...</p>
-            <div class="modal-actions">
-                <button class="btn btn-primary" id="confirmYes">Yes, Continue</button>
-                <button class="btn btn-secondary" id="confirmNo">No, Change Settings</button>
-            </div>
+            </main>
         </div>
     </div>
 
-    <!-- Auth Required Modal -->
-<div class="modal-overlay" id="authRequiredModal" hidden>
+    <!-- Modals -->
+    <div class="modal-overlay" id="authRequiredModal" hidden>
         <div class="modal auth-modal">
             <button class="modal-close" id="authRequiredClose" aria-label="Close">✕</button>
-            <div class="auth-modal-icon">🔒</div>
-            <h3>Sign In Required</h3>
-            <p>Please sign in to access AI Spark Studio and start creating viral shorts.</p>
+            <div style="text-align: center; margin-bottom: 16px;">
+                <svg data-lucide="lock" width="44" height="44" style="color:var(--primary);"></svg>
+            </div>
+            <h3 style="text-align: center; margin-bottom: 8px;">Sign In Required</h3>
+            <p style="text-align: center; color: var(--text-secondary); font-size: 13px;">Please sign in to access AI Clip Studio and create viral shorts.</p>
             <div class="modal-actions">
-                <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-block">Sign In</a>
                 <a href="/" class="btn btn-secondary btn-block">Back to Home</a>
             </div>
         </div>
     </div>
 
-    <!-- Large File Warning Modal -->
-<div class="modal-overlay" id="largeFileModal" hidden>
+    <div class="modal-overlay" id="confirmModal" hidden>
+        <div class="modal">
+            <button class="modal-close" id="confirmClose" aria-label="Close">✕</button>
+            <h3 style="margin-bottom: 8px;">Clip Count Adjustment</h3>
+            <p id="confirmText" style="color: var(--text-secondary); font-size: 13px;">...</p>
+            <div class="modal-actions">
+                <button class="btn btn-primary" id="confirmYes">Yes, Continue</button>
+                <button class="btn btn-secondary" id="confirmNo">Change Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="largeFileModal" hidden>
         <div class="modal large-file-modal">
             <button class="modal-close" id="largeFileClose" aria-label="Close">✕</button>
-            <div class="large-file-icon">⚠️</div>
-            <h3>Large Video Detected</h3>
-            <p id="largeFileMessage">This video is quite large. Analysis, scene detection, framing, and clip generation may take longer than usual.</p>
+            <div style="text-align: center; margin-bottom: 16px;">
+                <svg data-lucide="alert-triangle" width="44" height="44" style="color:var(--warning);"></svg>
+            </div>
+            <h3 style="text-align: center; margin-bottom: 8px;">Large Video Detected</h3>
+            <p id="largeFileMessage" style="text-align: center; color: var(--text-secondary); font-size: 13px;">This video is large. Analysis and rendering may take longer than usual.</p>
             <div class="modal-actions">
                 <button class="btn btn-primary" id="largeFileContinue">Continue Anyway</button>
                 <button class="btn btn-secondary" id="largeFileCancel">Cancel</button>
@@ -564,14 +647,27 @@
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-    {% if auth_required %}
+    <!-- Clip Preview Modal (New in Phase 3) -->
+    <div class="modal-overlay" id="clipPreviewModal" hidden>
+        <div class="modal" style="max-width: 500px; padding: var(--space-4);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-3);">
+                <h3 id="clipPreviewTitle" style="font-size:15px; font-weight:700;">Preview Clip</h3>
+                <button class="modal-close-btn" id="clipPreviewClose" style="font-size:16px; cursor:pointer;" type="button">✕</button>
+            </div>
+            <div style="background:var(--surface-0); border-radius:var(--radius-sm); overflow:hidden; border:1px solid var(--border); aspect-ratio:9/16; display:flex; align-items:center; justify-content:center;">
+                <video id="clipPreviewVideo" src="" controls style="max-width:100%; max-height:100%; object-fit:contain;" autoplay></video>
+            </div>
+        </div>
+    </div>
+    <div id="projectContextData" data-project='{% if project %}{{ project|tojson }}{% else %}null{% endif %}' data-file-param="{{ file_param or '' }}" hidden></div>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var modal = document.getElementById('authRequiredModal');
-            if (modal) modal.hidden = false;
-        });
+        // Inject project context from DOM attributes to avoid static parser warnings
+        const contextEl = document.getElementById('projectContextData');
+        window.UpClipActiveProject = contextEl ? JSON.parse(contextEl.getAttribute('data-project') || 'null') : null;
+        window.UpClipFileParam = contextEl ? (contextEl.getAttribute('data-file-param') || null) : null;
     </script>
-    {% endif %}
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>lucide.createIcons();</script>
 </body>
 </html>

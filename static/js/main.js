@@ -2,11 +2,24 @@
 // AI Shorts Studio - Frontend Logic (v2 Wizard)
 // ============================================
 
+// SVG icon strings (Lucide-style inline SVGs)
+var ICONS = {
+    save: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>',
+    download: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+    caption: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+    youtube: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
+    trash: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+    moon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
+    sun: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>',
+    downloadBtn: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+    sliders: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>',
+};
+
 // ---------- Theme Toggle ----------
 const themeToggle = document.getElementById('themeToggle');
 function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
-    if (themeToggle) themeToggle.textContent = theme === 'dark' ? '🌙' : '☀️';
+    if (themeToggle) themeToggle.innerHTML = theme === 'dark' ? ICONS.moon : ICONS.sun;
 }
 function initTheme() {
     const saved = localStorage.getItem('theme') || 'dark';
@@ -22,19 +35,7 @@ if (themeToggle) {
 }
 initTheme();
 
-// ---------- Account Menu / Mobile Menu / Logout ----------
-const accountBtn = document.getElementById('accountBtn');
-const accountDropdown = document.getElementById('accountDropdown');
-if (accountBtn && accountDropdown) {
-    accountBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        accountDropdown.hidden = !accountDropdown.hidden;
-    });
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.account-menu')) accountDropdown.hidden = true;
-    });
-}
-
+// ---------- Mobile Menu ----------
 const menuToggle = document.getElementById('menuToggle');
 const mobileMenu = document.getElementById('mobileMenu');
 if (menuToggle && mobileMenu) {
@@ -42,15 +43,6 @@ if (menuToggle && mobileMenu) {
         mobileMenu.hidden = !mobileMenu.hidden;
     });
 }
-
-async function logout() {
-    await fetch('/auth/logout', { method: 'POST' });
-    window.location.href = '/';
-}
-const logoutBtn = document.getElementById('logoutBtn');
-const logoutBtnMobile = document.getElementById('logoutBtnMobile');
-if (logoutBtn) logoutBtn.addEventListener('click', logout);
-if (logoutBtnMobile) logoutBtnMobile.addEventListener('click', logout);
 
 // ---------- Pipeline Timer ----------
 let timerInterval = null;
@@ -150,26 +142,32 @@ function nextStep() {
             alert('Please upload a video first.');
             return;
         }
-    }
-    if (step === 7) {
+        showStep(2);
+    } else if (step === 2) {
+        showStep(7);
         startPipeline();
-        return;
-    }
-    if (step === 8) {
+    } else if (step === 7) {
+        startPipeline();
+    } else if (step === 8) {
         showStep(9);
-        return;
+    } else {
+        showStep(step + 1);
     }
-    showStep(step + 1);
 }
 
 wizNext.addEventListener('click', nextStep);
 wizPrev.addEventListener('click', () => {
     if (state.currentStep === 9) {
         showStep(8);
+    } else if (state.currentStep === 8) {
+        showStep(2);
+    } else if (state.currentStep === 7) {
+        showStep(2);
     } else {
         showStep(Math.max(1, state.currentStep - 1));
     }
 });
+
 
 // ---------- Conditional question logic ----------
 document.querySelectorAll('input[name="clipmode"]').forEach(r => {
@@ -556,24 +554,6 @@ if (confirmModal) {
     });
 }
 
-// Auth Required Modal
-const authRequiredModal = document.getElementById('authRequiredModal');
-const authRequiredClose = document.getElementById('authRequiredClose');
-if (authRequiredClose) {
-    authRequiredClose.addEventListener('click', () => {
-        if (authRequiredModal) authRequiredModal.hidden = true;
-        window.location.href = '/';
-    });
-}
-if (authRequiredModal) {
-    authRequiredModal.addEventListener('click', (e) => {
-        if (e.target === authRequiredModal) {
-            authRequiredModal.hidden = true;
-            window.location.href = '/';
-        }
-    });
-}
-
 // ---------- Logo Navigation ----------
 const brandEl = document.querySelector('.brand');
 if (brandEl) {
@@ -595,23 +575,68 @@ function renderReviewGrid() {
         return;
     }
 
+    const sourceStem = state.currentFile ? state.currentFile.substring(0, state.currentFile.lastIndexOf('.')) : '';
+    const thumbUrl = sourceStem ? `/download/thumbnail/${sourceStem}_thumb.jpg` : '/static/img/default_thumb.png';
+
     state.clips.forEach((clip, idx) => {
         const card = document.createElement('div');
-        card.className = 'review-clip';
-        const projectId = state.result?.project_id || '';
+        card.className = 'review-clip card';
+        card.setAttribute('data-clip-name', clip.name);
+        card.setAttribute('data-idx', idx);
+        
         card.innerHTML = `
-            <video preload="metadata" controls src="/download/clip/stream/${clip.name}"></video>
-            <input class="clip-name-input" value="${clip.name}" data-idx="${idx}">
-            <div class="clip-actions">
-                <button class="btn-sm" data-action="save" data-idx="${idx}">💾 Rename</button>
-                <button class="btn-sm" data-action="download" data-idx="${idx}">⬇ Download</button>
-                <button class="btn-sm accent" data-action="open-caption" data-idx="${idx}" title="Open in Caption Studio">💬 Captions</button>
-                <button class="btn-sm" data-action="send-youtube" data-idx="${idx}" title="Send to YouTube">📺 YouTube</button>
-                <button class="btn-sm danger" data-action="delete" data-idx="${idx}">🗑 Delete</button>
+            <input type="checkbox" class="review-clip-checkbox" data-idx="${idx}" style="position: absolute; top: 10px; left: 10px; z-index: 10; width: 18px; height: 18px; cursor: pointer;">
+            <div class="project-thumb-wrap" style="position: relative; aspect-ratio: 9/16; background: #000; overflow: hidden; border-radius: var(--radius-sm); cursor: pointer;" data-action="preview" data-idx="${idx}">
+                <img class="project-thumb" src="${thumbUrl}" alt="Clip thumbnail" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='/static/img/default_thumb.png'">
+                <div class="play-overlay" style="position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity var(--transition-fast);">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </div>
+                <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; font-size: 10px; font-family: var(--font-mono); color: #fff;">
+                    Clip
+                </div>
+            </div>
+            <input class="clip-name-input" value="${clip.name}" data-idx="${idx}" style="width: 100%; margin-top: 8px; font-size: 12px; font-weight: 600; text-align: center; background: transparent; border: 1px solid var(--border); border-radius: 4px; padding: 4px;">
+            <div class="clip-actions" style="display: flex; gap: var(--space-1); justify-content: center; margin-top: 8px; width: 100%;">
+                <button class="btn-sm" data-action="preview" data-idx="${idx}" title="Preview Clip" style="padding: 4px 8px; font-size: 11px;">Preview</button>
+                <button class="btn-sm accent" data-action="open-caption" data-idx="${idx}" title="Open in Caption Studio" style="padding: 4px 8px; font-size: 11px;">Captions</button>
+                <button class="btn-sm danger" data-action="delete" data-idx="${idx}" title="Delete Clip" style="padding: 4px 8px; font-size: 11px;">Delete</button>
             </div>
         `;
+        
+        const chk = card.querySelector('.review-clip-checkbox');
+        chk.addEventListener('change', (e) => {
+            if (chk.checked) {
+                card.classList.add('selected');
+            } else {
+                card.classList.remove('selected');
+            }
+            updateBatchActionsBar();
+        });
+
+        const thumbWrap = card.querySelector('.project-thumb-wrap');
+        thumbWrap.addEventListener('mouseover', () => {
+            thumbWrap.querySelector('.play-overlay').style.opacity = '1';
+        });
+        thumbWrap.addEventListener('mouseout', () => {
+            thumbWrap.querySelector('.play-overlay').style.opacity = '0';
+        });
+
         reviewGrid.appendChild(card);
     });
+}
+
+function updateBatchActionsBar() {
+    const bar = document.getElementById('batchActionsBar');
+    const text = document.getElementById('selectedCountText');
+    const checked = document.querySelectorAll('.review-clip-checkbox:checked');
+    if (bar) {
+        if (checked.length > 0) {
+            bar.style.display = 'flex';
+            if (text) text.textContent = `${checked.length} clip${checked.length > 1 ? 's' : ''} selected`;
+        } else {
+            bar.style.display = 'none';
+        }
+    }
 }
 
 reviewGrid.addEventListener('click', async (e) => {
@@ -623,29 +648,16 @@ reviewGrid.addEventListener('click', async (e) => {
 
     const action = btn.dataset.action;
 
-    if (action === 'download') {
-        window.open(`/download/clip/${clip.name}`, '_blank');
+    if (action === 'preview') {
+        previewClip(clip.name);
     } else if (action === 'open-caption') {
-        const projectId = state.result?.project_id || '';
+        const projectId = state.result?.project_id || (window.UpClipActiveProject ? `proj_${window.UpClipActiveProject.id}` : '');
         const clipSubtitleMap = state.result?.clip_subtitle_map || {};
         const clipSrt = clipSubtitleMap[clip.name]?.srt || state.result?.srt || '';
         const clipVtt = clipSubtitleMap[clip.name]?.vtt || state.result?.vtt || '';
         const captionStyle = state.result?.caption_style || null;
         const navUrl = `/open-caption-studio?video=${encodeURIComponent(clip.name)}&project_id=${encodeURIComponent(projectId)}&srt=${encodeURIComponent(clipSrt)}&vtt=${encodeURIComponent(clipVtt)}&style=${encodeURIComponent(captionStyle ? JSON.stringify(captionStyle) : '')}`;
         window.location.href = navUrl;
-    } else if (action === 'send-youtube') {
-        const projectId = state.result?.project_id || '';
-        try {
-            await fetch('/process/clip/send-to-input', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ filename: clip.name }),
-            });
-        } catch (e) { /* best-effort copy */ }
-        const params = new URLSearchParams();
-        params.set('file', clip.name);
-        if (projectId) params.set('project_id', projectId);
-        window.location.href = `/youtube-desk?${params.toString()}`;
     } else if (action === 'delete') {
         const confirmed = confirm(`Delete ${clip.name}?`);
         if (!confirmed) return;
@@ -658,28 +670,38 @@ reviewGrid.addEventListener('click', async (e) => {
         if (data.success) {
             state.clips.splice(idx, 1);
             renderReviewGrid();
+            updateBatchActionsBar();
         } else {
             alert('Delete failed: ' + data.error);
         }
-    } else if (action === 'save') {
-        const input = document.querySelector(`.clip-name-input[data-idx="${idx}"]`);
-        const newName = input.value.trim();
-        if (!newName || newName === clip.name) return;
-        const res = await fetch('/process/clip/rename', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ old_name: clip.name, new_name: newName }),
-        });
-        const data = await res.json();
-        if (data.success) {
-            clip.name = newName;
-            clip.url = `/download/clip/${newName}`;
-            renderReviewGrid();
-        } else {
-            alert('Rename failed: ' + data.error);
-        }
     }
 });
+
+reviewGrid.addEventListener('change', async (e) => {
+    const input = e.target.closest('.clip-name-input');
+    if (!input) return;
+    const idx = parseInt(input.dataset.idx, 10);
+    const clip = state.clips[idx];
+    if (!clip) return;
+    const newName = input.value.trim();
+    if (!newName || newName === clip.name) return;
+    const res = await fetch('/process/clip/rename', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ old_name: clip.name, new_name: newName }),
+    });
+    const data = await res.json();
+    if (data.success) {
+        clip.name = newName;
+        clip.url = `/download/clip/${newName}`;
+        window.UpClipToast.show('Clip renamed successfully', 'success');
+        renderReviewGrid();
+    } else {
+        alert('Rename failed: ' + data.error);
+        input.value = clip.name; // Reset
+    }
+});
+
 
 // ---------- Export (Step 8) ----------
 function renderExport() {
@@ -711,7 +733,7 @@ function renderExport() {
                 div.className = 'download-item';
                 div.innerHTML = `
                     <div><div class="file-name">${item.name}</div><div class="file-size">Subtitle file</div></div>
-                    <a class="download-link" href="${item.url}">⬇ Download</a>
+                    <a class="download-link" href="${item.url}">${ICONS.download} Download</a>
                 `;
                 subtitleList.appendChild(div);
             }
@@ -725,7 +747,7 @@ function renderExport() {
         div.className = 'download-item';
         div.innerHTML = `
             <div><div class="file-name">Transcript JSON</div><div class="file-size">${result.transcript ? result.transcript.length + ' segments' : ''}</div></div>
-            <a class="download-link" href="${result.transcript_file}">⬇ Download</a>
+            <a class="download-link" href="${result.transcript_file}">${ICONS.download} Download</a>
         `;
         transcriptList.appendChild(div);
     }
@@ -751,7 +773,7 @@ function renderExport() {
 
     const downloadAllBtn = document.getElementById('downloadAllBtn');
     if (downloadAllBtn) {
-        downloadAllBtn.textContent = '⬇ Download All Clips (ZIP)';
+        downloadAllBtn.innerHTML = ICONS.download + ' Download All Clips (ZIP)';
         downloadAllBtn.onclick = () => {
             window.open('/download/all', '_blank');
         };
@@ -759,6 +781,7 @@ function renderExport() {
 
     const exportQualityBtn = document.getElementById('exportQualityBtn');
     if (exportQualityBtn) {
+        exportQualityBtn.innerHTML = ICONS.sliders + ' Export Selected Quality';
         exportQualityBtn.onclick = () => {
             const quality = document.getElementById('exportQuality').value;
             const firstClip = (state.clips && state.clips[0] && state.clips[0].name) || (result.clips && result.clips[0]);
@@ -775,7 +798,8 @@ function showStep(step) {
     state.currentStep = step;
 
     document.querySelectorAll('.wiz-panel').forEach(p => p.classList.remove('active'));
-    document.querySelector(`.wiz-panel[data-panel="${step}"]`).classList.add('active');
+    const panel = document.querySelector(`.wiz-panel[data-panel="${step}"]`);
+    if (panel) panel.classList.add('active');
 
     document.querySelectorAll('.wiz-step').forEach(s => {
         const n = parseInt(s.dataset.wiz);
@@ -784,12 +808,16 @@ function showStep(step) {
         if (n === step) s.classList.add('active');
     });
 
-wizPrev.hidden = step === 1;
+    wizPrev.hidden = step === 1;
     wizNext.hidden = false;
 
-    if (step === 7) {
-        wizNext.innerHTML = '<span class="spinner" hidden></span> Generate Clips';
+    if (step === 2) {
+        wizNext.innerHTML = '✦ Generate Clips';
         wizNext.disabled = !state.currentFile;
+    } else if (step === 7) {
+        wizNext.innerHTML = '<span class="spinner" hidden></span> Generating...';
+        wizNext.disabled = true;
+        buildSummary();
     } else if (step === 8) {
         wizNext.innerHTML = 'Export →';
         wizNext.disabled = false;
@@ -801,8 +829,6 @@ wizPrev.hidden = step === 1;
         wizNext.innerHTML = 'Continue →';
         wizNext.disabled = false;
     }
-
-    if (step === 7) buildSummary();
 }
 
 // ---------- Load file from query param (from YT Downloader) ----------
@@ -975,10 +1001,570 @@ if (jobsIndicator) {
     pollActiveJobs();
 }
 
-// ---------- Init ----------
+// ============================================
+// Phase 1 Desktop Shell Foundations
+// ============================================
+
+// ---------- 1. Reusable Toast Notification System ----------
+window.UpClipToast = {
+    show(message, type = 'info', duration = 3500) {
+        let container = document.querySelector('.app-toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'app-toast-container';
+            document.body.appendChild(container);
+        }
+        const toast = document.createElement('div');
+        toast.className = `app-toast ${type}`;
+        
+        let iconSvg = '';
+        if (type === 'success') {
+            iconSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
+        } else if (type === 'error') {
+            iconSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--error)" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+        } else if (type === 'warning') {
+            iconSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2.5"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+        } else {
+            iconSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
+        }
+        
+        toast.innerHTML = `
+            ${iconSvg}
+            <span>${message}</span>
+        `;
+        container.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.classList.add('hiding');
+            setTimeout(() => toast.remove(), 200);
+        }, duration);
+    }
+};
+
+// ---------- 2. Desktop Sidebar Collapse ----------
+function initSidebar() {
+    const sidebar = document.getElementById('appSidebar');
+    const toggleBtn = document.getElementById('sidebarToggle');
+    if (!sidebar) return;
+    
+    const savedState = localStorage.getItem('upclip_sidebar_collapsed');
+    if (savedState === 'true') {
+        sidebar.classList.add('collapsed');
+    }
+    
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            localStorage.setItem('upclip_sidebar_collapsed', isCollapsed);
+        });
+    }
+}
+
+// ---------- 3. Desktop Command Palette (Ctrl+K) ----------
+function initCommandPalette() {
+    let backdrop = document.getElementById('commandPaletteBackdrop');
+    if (!backdrop) {
+        backdrop = document.createElement('div');
+        backdrop.id = 'commandPaletteBackdrop';
+        backdrop.className = 'command-palette-backdrop';
+        backdrop.hidden = true;
+        backdrop.innerHTML = `
+            <div class="command-palette">
+                <div class="command-search-wrap">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    <input type="text" class="command-search-input" id="commandSearchInput" placeholder="Type a command or jump to workspace..." autocomplete="off">
+                    <span class="kbd-badge">ESC</span>
+                </div>
+                <div class="command-list" id="commandList">
+                    <div class="command-item" data-action="new-project">
+                        <div class="command-item-left">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                            <span>New AI Shorts Project</span>
+                        </div>
+                        <span class="kbd-badge">Dashboard</span>
+                    </div>
+                    <div class="command-item" data-action="open-clips">
+                        <div class="command-item-left">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
+                            <span>Open AI Clip Studio</span>
+                        </div>
+                    </div>
+                    <div class="command-item" data-action="open-captions">
+                        <div class="command-item-left">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                            <span>Open Caption Studio</span>
+                        </div>
+                    </div>
+                    <div class="command-item" data-action="open-youtube">
+                        <div class="command-item-left">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="15" x="2" y="7" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>
+                            <span>Open YouTube Automation Desk</span>
+                        </div>
+                    </div>
+                    <div class="command-item" data-action="open-downloader">
+                        <div class="command-item-left">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            <span>Open YouTube Downloader</span>
+                        </div>
+                    </div>
+                    <div class="command-item" data-action="open-hub">
+                        <div class="command-item-left">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+                            <span>Open Studio Hub</span>
+                        </div>
+                    </div>
+                    <div class="command-item" data-action="toggle-theme">
+                        <div class="command-item-left">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>
+                            <span>Toggle Dark / Light Theme</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(backdrop);
+    }
+    
+    function openPalette() {
+        backdrop.hidden = false;
+        const input = document.getElementById('commandSearchInput');
+        if (input) {
+            input.value = '';
+            input.focus();
+            filterCommands('');
+        }
+    }
+    
+    function closePalette() {
+        backdrop.hidden = true;
+    }
+    
+    function filterCommands(query) {
+        const items = backdrop.querySelectorAll('.command-item');
+        const q = query.toLowerCase().trim();
+        items.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            item.style.display = text.includes(q) ? 'flex' : 'none';
+        });
+    }
+    
+    backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) closePalette();
+    });
+    
+    const input = document.getElementById('commandSearchInput');
+    if (input) {
+        input.addEventListener('input', (e) => filterCommands(e.target.value));
+    }
+    
+    backdrop.addEventListener('click', (e) => {
+        const item = e.target.closest('.command-item');
+        if (!item) return;
+        const action = item.dataset.action;
+        closePalette();
+        
+        if (action === 'new-project' || action === 'open-clips') window.location.href = '/dashboard';
+        else if (action === 'open-captions') window.location.href = '/caption-studio';
+        else if (action === 'open-youtube') window.location.href = '/youtube-desk';
+        else if (action === 'open-downloader') window.location.href = '/yt-downloader';
+        else if (action === 'open-hub') window.location.href = '/studio';
+        else if (action === 'toggle-theme') {
+            const current = document.documentElement.getAttribute('data-theme') || 'dark';
+            const next = current === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('theme', next);
+            applyTheme(next);
+            window.UpClipToast.show(`Switched to ${next} theme`, 'info');
+        }
+    });
+    
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+            e.preventDefault();
+            if (backdrop.hidden) openPalette();
+            else closePalette();
+        } else if (e.key === 'Escape' && !backdrop.hidden) {
+            closePalette();
+        }
+    });
+    
+    const topbarSearch = document.getElementById('topbarCommandTrigger');
+    if (topbarSearch) {
+        topbarSearch.addEventListener('click', openPalette);
+    }
+}
+
+// ---------- 4. Tooltips & Shortcuts Manager ----------
+function initTooltips() {
+    let tooltipEl = document.querySelector('.app-tooltip');
+    if (!tooltipEl) {
+        tooltipEl = document.createElement('div');
+        tooltipEl.className = 'app-tooltip';
+        tooltipEl.hidden = true;
+        document.body.appendChild(tooltipEl);
+    }
+
+    document.addEventListener('mouseover', (e) => {
+        const target = e.target.closest('[data-tooltip]');
+        if (!target) return;
+        const text = target.getAttribute('data-tooltip');
+        const hotkey = target.getAttribute('data-hotkey');
+        if (!text) return;
+        
+        tooltipEl.innerHTML = `<span>${text}</span>${hotkey ? `<span class="kbd-badge">${hotkey}</span>` : ''}`;
+        tooltipEl.hidden = false;
+        
+        const rect = target.getBoundingClientRect();
+        tooltipEl.style.left = `${rect.left + rect.width / 2 - tooltipEl.offsetWidth / 2}px`;
+        tooltipEl.style.top = `${rect.bottom + 6}px`;
+    });
+
+    document.addEventListener('mouseout', (e) => {
+        const target = e.target.closest('[data-tooltip]');
+        if (target && tooltipEl) {
+            tooltipEl.hidden = true;
+        }
+    });
+}
+
+// ---------- Load Recent Projects ----------
+async function loadProjects() {
+    const grid = document.getElementById('projectsGrid');
+    if (!grid) return;
+    // Loading placeholder
+    grid.innerHTML = `<div class="card" style="text-align:center;">Loading projects…</div>`;
+    try {
+        const res = await fetch('/api/projects');
+        const data = await res.json();
+        if (Array.isArray(data) && data.length) {
+            grid.innerHTML = data.map(p => {
+                const thumb = p.thumbnail_path ? p.thumbnail_path : '/static/img/default_thumb.png';
+                const dur = (p.duration !== null && p.duration !== undefined) ? formatTime(p.duration) : '-';
+                const status = p.status || '';
+                return `
+                <div class="project-card" data-id="${p.id}">
+                    <img class="project-thumb" src="${thumb}" alt="Project thumbnail">
+                    <div class="project-name">${p.name}</div>
+                    <div class="project-meta">
+                        <span>${status}</span>
+                        <span>${dur}</span>
+                    </div>
+                </div>`;
+            }).join('');
+        } else {
+            grid.innerHTML = `<div class="card" style="text-align:center;">No recent projects.</div>`;
+        }
+    } catch (e) {
+        console.error('Failed to load projects:', e);
+        grid.innerHTML = `<div class="card" style="color: var(--error); text-align:center;">Failed to load projects.</div>`;
+    }
+}
+
+// ---------- Custom Video Player Controls ----------
+function initCustomPlayer() {
+    const video = document.getElementById('sourceVideoPlayer');
+    const playPause = document.getElementById('videoPlayPause');
+    const scrubber = document.getElementById('videoScrubber');
+    const currentTimeText = document.getElementById('videoCurrentTime');
+    const durationText = document.getElementById('videoDuration');
+    const muteBtn = document.getElementById('videoMute');
+    const volumeSlider = document.getElementById('volumeSlider');
+    
+    if (!video || !playPause || !scrubber) return;
+
+    playPause.addEventListener('click', () => {
+        if (video.paused) {
+            video.play();
+            playPause.querySelector('.play-icon').style.display = 'none';
+            playPause.querySelector('.pause-icon').style.display = 'block';
+        } else {
+            video.pause();
+            playPause.querySelector('.play-icon').style.display = 'block';
+            playPause.querySelector('.pause-icon').style.display = 'none';
+        }
+    });
+
+    video.addEventListener('timeupdate', () => {
+        if (!video.duration) return;
+        const pct = (video.currentTime / video.duration) * 100;
+        scrubber.value = pct;
+        if (currentTimeText) currentTimeText.textContent = formatTime(video.currentTime);
+    });
+
+    video.addEventListener('loadedmetadata', () => {
+        if (durationText) durationText.textContent = formatTime(video.duration);
+        const metaFilename = document.getElementById('metaFilename');
+        const metaResolution = document.getElementById('metaResolution');
+        const metaFPS = document.getElementById('metaFPS');
+        const metaSize = document.getElementById('metaSize');
+        
+        if (metaFilename) metaFilename.textContent = state.currentFile || 'Video';
+        if (metaResolution) {
+            metaResolution.textContent = state.currentMetadata ? 
+                `${state.currentMetadata.width}×${state.currentMetadata.height}` : 
+                `${video.videoWidth}×${video.videoHeight}`;
+        }
+        if (metaFPS && state.currentMetadata) metaFPS.textContent = `${state.currentMetadata.fps} FPS`;
+        if (metaSize && state.currentMetadata) metaSize.textContent = formatBytes(state.currentMetadata.size_bytes);
+    });
+
+    scrubber.addEventListener('input', () => {
+        if (!video.duration) return;
+        const time = (scrubber.value / 100) * video.duration;
+        video.currentTime = time;
+    });
+
+    if (muteBtn) {
+        muteBtn.addEventListener('click', () => {
+            video.muted = !video.muted;
+            if (video.muted) {
+                muteBtn.querySelector('.volume-icon').style.display = 'none';
+                muteBtn.querySelector('.mute-icon').style.display = 'block';
+            } else {
+                muteBtn.querySelector('.volume-icon').style.display = 'block';
+                muteBtn.querySelector('.mute-icon').style.display = 'none';
+            }
+        });
+    }
+
+    if (volumeSlider) {
+        volumeSlider.addEventListener('input', () => {
+            video.volume = volumeSlider.value / 100;
+            video.muted = video.volume === 0;
+        });
+    }
+}
+
+// ---------- Clip Preview Modal ----------
+function initClipPreviewModal() {
+    const modal = document.getElementById('clipPreviewModal');
+    const closeBtn = document.getElementById('clipPreviewClose');
+    const video = document.getElementById('clipPreviewVideo');
+    if (!modal || !closeBtn || !video) return;
+
+    closeBtn.addEventListener('click', () => {
+        modal.hidden = true;
+        video.pause();
+        video.src = '';
+    });
+    
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.hidden = true;
+            video.pause();
+            video.src = '';
+        }
+    });
+}
+
+function previewClip(clipName) {
+    const modal = document.getElementById('clipPreviewModal');
+    const video = document.getElementById('clipPreviewVideo');
+    const title = document.getElementById('clipPreviewTitle');
+    if (!modal || !video) return;
+
+    title.textContent = clipName;
+    video.src = `/download/clip/stream/${clipName}`;
+    modal.hidden = false;
+    video.play();
+}
+
+// ---------- Project Context Sync ----------
+async function loadActiveProject() {
+    const project = window.UpClipActiveProject;
+    const fileParam = window.UpClipFileParam;
+    
+    if (project) {
+        console.log("Loading active project context:", project);
+        
+        // Update project badge in header
+        const projectNameText = document.getElementById('projectNameText');
+        if (projectNameText) projectNameText.textContent = project.name;
+        
+        if (project.source_path) {
+            state.currentFile = project.source_path;
+            
+            // Set source Video URL
+            const video = document.getElementById('sourceVideoPlayer');
+            if (video) {
+                video.src = `/download/input/${project.source_path}`;
+                document.getElementById('sourceVideoContainer').hidden = false;
+            }
+            
+            // Try fetching metadata
+            try {
+                const metaRes = await fetch(`/process/metadata/${encodeURIComponent(project.source_path)}`);
+                const metaData = await metaRes.json();
+                if (metaData.success) {
+                    state.currentMetadata = metaData.metadata;
+                }
+            } catch (e) {
+                console.warn("Could not load project source metadata:", e);
+            }
+            
+            // Query for clips of this project
+            try {
+                const res = await fetch(`/studio/project/proj_${project.id}`);
+                const data = await res.json();
+                if (data.success && data.project) {
+                    state.clips = data.project.clips.map(c => ({ name: c.filename, url: c.url }));
+                    if (state.clips.length) {
+                        state.result = data.project;
+                        renderReviewGrid();
+                        showStep(8); // Go straight to review clips step
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.warn("Could not load project clips:", e);
+            }
+            
+            // Go to unified settings config step
+            showStep(2);
+            return;
+        }
+    }
+    
+    if (fileParam) {
+        state.currentFile = fileParam;
+        showStep(2);
+    }
+}
+
+// ---------- Batch Action Listeners & Refresh ----------
+function initBatchAndRefreshListeners() {
+    const selectAllBtn = document.getElementById('selectAllClipsBtn');
+    const clearSelectionBtn = document.getElementById('clearClipSelectionBtn');
+    const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+    const batchDownloadBtn = document.getElementById('batchDownloadBtn');
+    const batchOpenEditorBtn = document.getElementById('batchOpenEditorBtn');
+    const refreshClipsBtn = document.getElementById('refreshClipsBtn');
+    
+    if (selectAllBtn) {
+        selectAllBtn.addEventListener('click', () => {
+            document.querySelectorAll('.review-clip-checkbox').forEach(chk => {
+                chk.checked = true;
+                chk.parentElement.classList.add('selected');
+            });
+            updateBatchActionsBar();
+        });
+    }
+
+    if (clearSelectionBtn) {
+        clearSelectionBtn.addEventListener('click', () => {
+            document.querySelectorAll('.review-clip-checkbox').forEach(chk => {
+                chk.checked = false;
+                chk.parentElement.classList.remove('selected');
+            });
+            updateBatchActionsBar();
+        });
+    }
+
+    if (batchDeleteBtn) {
+        batchDeleteBtn.addEventListener('click', async () => {
+            const checked = document.querySelectorAll('.review-clip-checkbox:checked');
+            if (!checked.length) return;
+            const confirmed = confirm(`Are you sure you want to delete the ${checked.length} selected clip(s)?`);
+            if (!confirmed) return;
+            
+            for (const chk of checked) {
+                const idx = parseInt(chk.dataset.idx, 10);
+                const clip = state.clips[idx];
+                if (!clip) continue;
+                try {
+                    await fetch('/process/clip/delete', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filename: clip.name }),
+                    });
+                } catch(e) { console.error(e); }
+            }
+            // Remove deleted items from local state
+            const remaining = [];
+            document.querySelectorAll('.review-clip-checkbox').forEach((chk, i) => {
+                if (!chk.checked) remaining.push(state.clips[i]);
+            });
+            state.clips = remaining;
+            renderReviewGrid();
+            updateBatchActionsBar();
+            window.UpClipToast.show('Clips deleted successfully', 'success');
+        });
+    }
+
+    if (batchDownloadBtn) {
+        batchDownloadBtn.addEventListener('click', () => {
+            window.open('/download/all', '_blank');
+        });
+    }
+
+    if (batchOpenEditorBtn) {
+        batchOpenEditorBtn.addEventListener('click', () => {
+            const checked = document.querySelectorAll('.review-clip-checkbox:checked');
+            if (!checked.length) return;
+            const idx = parseInt(checked[0].dataset.idx, 10);
+            const clip = state.clips[idx];
+            if (!clip) return;
+            const projectId = state.result?.project_id || (window.UpClipActiveProject ? `proj_${window.UpClipActiveProject.id}` : '');
+            const clipSubtitleMap = state.result?.clip_subtitle_map || {};
+            const clipSrt = clipSubtitleMap[clip.name]?.srt || state.result?.srt || '';
+            const clipVtt = clipSubtitleMap[clip.name]?.vtt || state.result?.vtt || '';
+            const captionStyle = state.result?.caption_style || null;
+            const navUrl = `/open-caption-studio?video=${encodeURIComponent(clip.name)}&project_id=${encodeURIComponent(projectId)}&srt=${encodeURIComponent(clipSrt)}&vtt=${encodeURIComponent(clipVtt)}&style=${encodeURIComponent(captionStyle ? JSON.stringify(captionStyle) : '')}`;
+            window.location.href = navUrl;
+        });
+    }
+
+    if (refreshClipsBtn) {
+        refreshClipsBtn.addEventListener('click', async () => {
+            refreshClipsBtn.classList.add('spinning');
+            try {
+                const activeProj = window.UpClipActiveProject || (state.result ? { id: state.result.project_id.replace('proj_', '') } : null);
+                if (activeProj) {
+                    const res = await fetch(`/studio/project/proj_${activeProj.id}`);
+                    const data = await res.json();
+                    if (data.success && data.project) {
+                        state.clips = data.project.clips.map(c => ({ name: c.filename, url: c.url }));
+                        renderReviewGrid();
+                        window.UpClipToast.show('Clip grid refreshed successfully', 'success');
+                    }
+                }
+            } catch (e) {
+                console.error('Refresh failed:', e);
+                window.UpClipToast.show('Failed to refresh clips', 'error');
+            } finally {
+                refreshClipsBtn.classList.remove('spinning');
+            }
+        });
+    }
+
+    // Projects Grid click handler on home page
+    const pGrid = document.getElementById('projectsGrid');
+    if (pGrid) {
+        pGrid.addEventListener('click', (e) => {
+            const card = e.target.closest('.project-card');
+            if (card) {
+                const id = card.dataset.id;
+                window.location.href = `/dashboard?project_id=${id}`;
+            }
+        });
+    }
+}
+
+// ---------- Init All ----------
 checkFfmpeg();
 showStep(1);
-loadFileFromQuery();
+initCustomPlayer();
+initClipPreviewModal();
+initBatchAndRefreshListeners();
+loadActiveProject().then(() => {
+    if (state.currentStep === 1) {
+        loadFileFromQuery();
+    }
+});
+initSidebar();
+loadProjects();
+initCommandPalette();
+initTooltips();
 
 // Show studio loader briefly on dashboard load if user is logged in
 if (window.location.pathname === '/dashboard') {
@@ -993,3 +1579,5 @@ if (previewLink) {
         if (state.result) showStep(9);
     });
 }
+
+

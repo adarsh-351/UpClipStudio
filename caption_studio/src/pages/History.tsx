@@ -165,7 +165,7 @@ export default function History() {
                   }`}
                   onClick={() => setFilters({ ...filters, status: "published" })}
                 >
-                  <CheckCircle className="w-3 h-3 text-green-400" />
+                  <CheckCircle className="w-3 h-3 text-brand-accent" />
                   <span>Published</span>
                 </label>
                 <label
@@ -187,7 +187,7 @@ export default function History() {
                   }`}
                   onClick={() => setFilters({ ...filters, status: "failed" })}
                 >
-                  <XCircle className="w-3 h-3 text-red-400" />
+                  <XCircle className="w-3 h-3 text-brand-primary" />
                   <span>Failed</span>
                 </label>
               </div>
@@ -286,7 +286,7 @@ export default function History() {
                   {video.status === "failed" && (
                     <button
                       onClick={() => setDeleteId(video.id)}
-                      className="btn-secondary text-xs py-0.5 px-2 text-red-400"
+                       className="btn-secondary text-xs py-0.5 px-2 text-brand-primary"
                       title="Remove from history"
                     >
                       <XCircle className="w-3 h-3" /> Remove

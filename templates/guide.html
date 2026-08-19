@@ -3,202 +3,302 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>How to Use AI Spark Studio — UpClip Studio</title>
+    <title>How to Use | UpClip Studio</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&family=Montserrat:wght@700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-<header class="navbar">
-    <div class="navbar-inner">
-        <div class="brand">
-            <a href="/" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:12px;">
-                <div class="brand-icon">🎬</div>
-                <div>
-                    <h1>UpClip Studio</h1>
-                    <p>Download • Clip • Grow</p>
+    <div class="app-shell">
+        <!-- Top Bar -->
+        <header class="app-topbar">
+            <div class="topbar-left">
+                <a href="/" class="topbar-brand">
+                    <span class="brand-dot"></span>
+                    <span>UpClip Studio</span>
+                </a>
+                <div class="topbar-divider"></div>
+                <div class="topbar-workspace-title">
+                    <svg data-lucide="book-open" width="16" height="16" style="color:var(--primary);"></svg>
+                    <span>User Guide</span>
                 </div>
-            </a>
+            </div>
+
+            <div class="topbar-center">
+                <button class="command-trigger" id="topbarCommandTrigger" data-tooltip="Quick Command Menu" data-hotkey="Ctrl+K">
+                    <div class="command-trigger-left">
+                        <svg data-lucide="search" width="14" height="14"></svg>
+                        <span>Search commands or switch workspace...</span>
+                    </div>
+                    <span class="kbd-badge">Ctrl + K</span>
+                </button>
+            </div>
+
+            <div class="topbar-right">
+                <button class="topbar-btn theme-toggle" id="themeToggle" aria-label="Toggle theme" data-tooltip="Toggle Dark/Light theme">🌙</button>
+                <a href="/dashboard" class="btn btn-primary btn-sm"><svg data-lucide="plus" width="14" height="14"></svg> New Project</a>
+            </div>
+        </header>
+
+        <div class="app-main">
+            <!-- Sidebar Navigation -->
+            <aside class="app-sidebar" id="appSidebar">
+                <div class="sidebar-header">
+                    <a href="/dashboard" class="sidebar-new-btn">
+                        <svg data-lucide="plus" width="16" height="16"></svg>
+                        <span>New Project</span>
+                    </a>
+                </div>
+
+                <nav class="sidebar-nav">
+                    <div class="nav-section-label">Workspaces</div>
+                    <a href="/" class="sidebar-item" data-tooltip="Home & Projects">
+                        <div class="sidebar-icon"><svg data-lucide="house" width="18" height="18"></svg></div>
+                        <span class="sidebar-label">Home & Projects</span>
+                    </a>
+                    <a href="/dashboard" class="sidebar-item" data-tooltip="AI Clip Studio">
+                        <div class="sidebar-icon"><svg data-lucide="wand-sparkles" width="18" height="18"></svg></div>
+                        <span class="sidebar-label">AI Clip Studio</span>
+                    </a>
+                    <a href="/caption-studio" class="sidebar-item" data-tooltip="Caption Studio">
+                        <div class="sidebar-icon"><svg data-lucide="captions" width="18" height="18"></svg></div>
+                        <span class="sidebar-label">Caption Studio</span>
+                    </a>
+                    <a href="/studio" class="sidebar-item" data-tooltip="Studio Hub">
+                        <div class="sidebar-icon"><svg data-lucide="shapes" width="18" height="18"></svg></div>
+                        <span class="sidebar-label">Studio Hub</span>
+                    </a>
+                    <a href="/yt-downloader" class="sidebar-item" data-tooltip="YT Downloader">
+                        <div class="sidebar-icon"><svg data-lucide="download" width="18" height="18"></svg></div>
+                        <span class="sidebar-label">Downloader</span>
+                    </a>
+                    <a href="/youtube-desk" class="sidebar-item" data-tooltip="YouTube Automation">
+                        <div class="sidebar-icon"><svg data-lucide="tv" width="18" height="18"></svg></div>
+                        <span class="sidebar-label">YouTube Desk</span>
+                    </a>
+
+                    <div class="nav-section-label" style="margin-top: 12px;">Resources</div>
+                    <a href="/guide" class="sidebar-item active" data-tooltip="User Guide">
+                        <div class="sidebar-icon"><svg data-lucide="book-open" width="18" height="18"></svg></div>
+                        <span class="sidebar-label">How to Use</span>
+                    </a>
+                </nav>
+
+                <div class="sidebar-footer">
+                    <button class="sidebar-toggle-btn" id="sidebarToggle" data-tooltip="Collapse / Expand Sidebar">
+                        <svg data-lucide="panel-left-close" width="18" height="18"></svg>
+                        <span class="sidebar-label">Collapse</span>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main Workspace Container -->
+            <main class="app-workspace">
+                <div class="workspace-content" style="max-width: 900px;">
+                    <div style="margin-bottom: var(--space-4);">
+                        <h1 style="font-family: var(--font-heading); font-size: 26px; font-weight: 800; color: var(--text-primary); margin-bottom: 4px;">How to Use UpClip Studio</h1>
+                        <p style="color: var(--text-secondary); font-size: 13px;">A step-by-step walkthrough of AI clipping, caption styling, and export workflows.</p>
+                    </div>
+
+                    <!-- Progress Indicator -->
+                    <div class="card" style="padding: var(--space-4); margin-bottom: var(--space-4);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Guide Progress</span>
+                            <span style="font-size: 12px; font-family: var(--font-mono); color: var(--primary);" id="guideProgressText">Step 1 of 10</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="guideProgressFill" style="width: 10%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Step Cards -->
+                    <div id="guideSteps">
+                        <div class="card guide-step active" data-step="1" style="display: flex; flex-direction: column; gap: var(--space-3);">
+                            <div style="display: flex; align-items: center; gap: var(--space-3);">
+                                <div style="width: 36px; height: 36px; border-radius: var(--radius-sm); background: var(--primary-soft); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                                    <svg data-lucide="upload" width="20" height="20"></svg>
+                                </div>
+                                <h3 style="font-size: 16px; font-weight: 700;">1. Upload Source Video</h3>
+                            </div>
+                            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                Drag and drop or browse to upload any video file (MP4, MOV, MKV, WebM). Files are processed locally on your device with high performance.
+                            </p>
+                        </div>
+
+                        <div class="card guide-step" data-step="2" style="display: none; flex-direction: column; gap: var(--space-3);">
+                            <div style="display: flex; align-items: center; gap: var(--space-3);">
+                                <div style="width: 36px; height: 36px; border-radius: var(--radius-sm); background: var(--primary-soft); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                                    <svg data-lucide="globe" width="20" height="20"></svg>
+                                </div>
+                                <h3 style="font-size: 16px; font-weight: 700;">2. Language & Subtitles</h3>
+                            </div>
+                            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                Whisper AI transcribes spoken audio into word-level timestamps. You can auto-detect the spoken language or translate subtitles into over 20 languages.
+                            </p>
+                        </div>
+
+                        <div class="card guide-step" data-step="3" style="display: none; flex-direction: column; gap: var(--space-3);">
+                            <div style="display: flex; align-items: center; gap: var(--space-3);">
+                                <div style="width: 36px; height: 36px; border-radius: var(--radius-sm); background: var(--primary-soft); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                                    <svg data-lucide="maximize" width="20" height="20"></svg>
+                                </div>
+                                <h3 style="font-size: 16px; font-weight: 700;">3. Aspect Ratio Reframing</h3>
+                            </div>
+                            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                Choose between 9:16 vertical (Shorts / Reels / TikTok), 16:9 landscape, or 1:1 square. Smart center-crop prevents stretching and maintains aspect integrity.
+                            </p>
+                        </div>
+
+                        <div class="card guide-step" data-step="4" style="display: none; flex-direction: column; gap: var(--space-3);">
+                            <div style="display: flex; align-items: center; gap: var(--space-3);">
+                                <div style="width: 36px; height: 36px; border-radius: var(--radius-sm); background: var(--primary-soft); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                                    <svg data-lucide="scissors" width="20" height="20"></svg>
+                                </div>
+                                <h3 style="font-size: 16px; font-weight: 700;">4. Scene Detection & Splitting</h3>
+                            </div>
+                            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                PySceneDetect scans visual boundaries and isolates engaging moments. You can let AI decide or define custom clip durations and targets.
+                            </p>
+                        </div>
+
+                        <div class="card guide-step" data-step="5" style="display: none; flex-direction: column; gap: var(--space-3);">
+                            <div style="display: flex; align-items: center; gap: var(--space-3);">
+                                <div style="width: 36px; height: 36px; border-radius: var(--radius-sm); background: var(--primary-soft); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                                    <svg data-lucide="message-square" width="20" height="20"></svg>
+                                </div>
+                                <h3 style="font-size: 16px; font-weight: 700;">5. Animated Karaoke Captions</h3>
+                            </div>
+                            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                Enable short-form animated karaoke subtitles. Active words highlight dynamically in sync with speech using FFmpeg ASS rendering.
+                            </p>
+                        </div>
+
+                        <div class="card guide-step" data-step="6" style="display: none; flex-direction: column; gap: var(--space-3);">
+                            <div style="display: flex; align-items: center; gap: var(--space-3);">
+                                <div style="width: 36px; height: 36px; border-radius: var(--radius-sm); background: var(--primary-soft); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                                    <svg data-lucide="eye" width="20" height="20"></svg>
+                                </div>
+                                <h3 style="font-size: 16px; font-weight: 700;">6. Review & Edit</h3>
+                            </div>
+                            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                Preview each generated clip in the review grid. Rename clips, delete unwanted cuts, or transfer any clip directly into Caption Studio.
+                            </p>
+                        </div>
+
+                        <div class="card guide-step" data-step="7" style="display: none; flex-direction: column; gap: var(--space-3);">
+                            <div style="display: flex; align-items: center; gap: var(--space-3);">
+                                <div style="width: 36px; height: 36px; border-radius: var(--radius-sm); background: var(--primary-soft); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                                    <svg data-lucide="captions" width="20" height="20"></svg>
+                                </div>
+                                <h3 style="font-size: 16px; font-weight: 700;">7. Caption Studio Timeline</h3>
+                            </div>
+                            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                Open Caption Studio for a full timeline editor. Drag caption timestamps, split lines, tweak fonts, active colors, and positioning.
+                            </p>
+                        </div>
+
+                        <div class="card guide-step" data-step="8" style="display: none; flex-direction: column; gap: var(--space-3);">
+                            <div style="display: flex; align-items: center; gap: var(--space-3);">
+                                <div style="width: 36px; height: 36px; border-radius: var(--radius-sm); background: var(--primary-soft); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                                    <svg data-lucide="download" width="20" height="20"></svg>
+                                </div>
+                                <h3 style="font-size: 16px; font-weight: 700;">8. Export & Quality Selection</h3>
+                            </div>
+                            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                Download all clips in a single ZIP archive, re-encode to 1080p/720p/360p, or download raw SRT/VTT subtitle files and JSON transcripts.
+                            </p>
+                        </div>
+
+                        <div class="card guide-step" data-step="9" style="display: none; flex-direction: column; gap: var(--space-3);">
+                            <div style="display: flex; align-items: center; gap: var(--space-3);">
+                                <div style="width: 36px; height: 36px; border-radius: var(--radius-sm); background: var(--primary-soft); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                                    <svg data-lucide="download-cloud" width="20" height="20"></svg>
+                                </div>
+                                <h3 style="font-size: 16px; font-weight: 700;">9. YouTube Downloader</h3>
+                            </div>
+                            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                Download long YouTube videos, playlists, or audio tracks directly into your local library for rapid clipping.
+                            </p>
+                        </div>
+
+                        <div class="card guide-step" data-step="10" style="display: none; flex-direction: column; gap: var(--space-3);">
+                            <div style="display: flex; align-items: center; gap: var(--space-3);">
+                                <div style="width: 36px; height: 36px; border-radius: var(--radius-sm); background: var(--primary-soft); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                                    <svg data-lucide="tv" width="20" height="20"></svg>
+                                </div>
+                                <h3 style="font-size: 16px; font-weight: 700;">10. YouTube Automation Desk</h3>
+                            </div>
+                            <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                                Connect your YouTube channel, prepare titles/descriptions/tags, schedule uploads, and track publication history directly from the desk.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Actions -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: var(--space-6);">
+                        <button class="btn btn-secondary" id="guidePrev" hidden>← Previous</button>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-ghost" id="guideSkip">Skip Guide</button>
+                            <button class="btn btn-primary" id="guideNext">Next →</button>
+                            <a href="/dashboard" class="btn btn-primary" id="guideStart" hidden>Start Creating →</a>
+                        </div>
+                    </div>
+                </div>
+            </main>
         </div>
-        <div class="nav-links">
-            <a href="/" class="nav-action">Home</a>
-            {% if current_user %}
-                <a href="/dashboard" class="btn btn-primary btn-sm-nav">Launch Studio →</a>
-            {% else %}
-                <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-sm-nav">Sign In</a>
-            {% endif %}
-        </div>
-        <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
     </div>
-</header>
 
-<main class="container guide-container">
-    <div class="guide-header">
-        <h2>How to Use AI Spark Studio</h2>
-        <p>Follow these simple steps to transform any video into viral shorts.</p>
-    </div>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        const guideSteps = document.querySelectorAll('.guide-step');
+        const guidePrev = document.getElementById('guidePrev');
+        const guideNext = document.getElementById('guideNext');
+        const guideStart = document.getElementById('guideStart');
+        const guideSkip = document.getElementById('guideSkip');
+        const guideProgressFill = document.getElementById('guideProgressFill');
+        const guideProgressText = document.getElementById('guideProgressText');
 
-    <!-- Progress Indicator -->
-    <div class="guide-progress">
-        <div class="guide-progress-bar">
-            <div class="guide-progress-fill" id="guideProgressFill"></div>
-        </div>
-        <div class="guide-progress-text" id="guideProgressText">Step 1 of 10</div>
-    </div>
+        let currentGuideStep = 1;
+        const totalGuideSteps = guideSteps.length;
 
-    <!-- Step Cards -->
-    <div class="guide-steps" id="guideSteps">
-        <div class="guide-step active" data-step="1">
-            <div class="guide-step-icon">🔐</div>
-            <div class="guide-step-content">
-                <h3>Sign In</h3>
-                <p>Create a free account or sign in to access the Studio. Your session is preserved while you work.</p>
-            </div>
-        </div>
-        <div class="guide-step" data-step="2">
-            <div class="guide-step-icon">📤</div>
-            <div class="guide-step-content">
-                <h3>Upload Video</h3>
-                <p>Drag and drop or browse to upload any video file. We support MP4, MOV, AVI, and more. Large files are supported with a friendly warning.</p>
-            </div>
-        </div>
-        <div class="guide-step" data-step="3">
-            <div class="guide-step-icon">🧠</div>
-            <div class="guide-step-content">
-                <h3>Video Analysis</h3>
-                <p>AI analyzes your video to understand content, extract frames, and prepare for intelligent scene detection.</p>
-            </div>
-        </div>
-        <div class="guide-step" data-step="4">
-            <div class="guide-step-icon">🎬</div>
-            <div class="guide-step-content">
-                <h3>Scene Selection</h3>
-                <p>AI automatically detects the best scenes and moments. Review the generated clips and select the ones you want to keep.</p>
-            </div>
-        </div>
-        <div class="guide-step" data-step="5">
-            <div class="guide-step-icon">✂️</div>
-            <div class="guide-step-content">
-                <h3>Optional Framing</h3>
-                <p>Choose whether to apply smart reframing for aspect ratio changes. Skip it for faster processing if you prefer the original framing.</p>
-            </div>
-        </div>
-        <div class="guide-step" data-step="6">
-            <div class="guide-step-icon">⚡</div>
-            <div class="guide-step-content">
-                <h3>Generate Clips</h3>
-                <p>AI generates perfect clips from your selected scenes. You can choose AI-decided clips or set your own duration and count.</p>
-            </div>
-        </div>
-        <div class="guide-step" data-step="7">
-            <div class="guide-step-icon">💬</div>
-            <div class="guide-step-content">
-                <h3>Animated Captions</h3>
-                <p>Add stunning animated captions to your clips. Choose from multiple templates and animation styles to match your brand.</p>
-            </div>
-        </div>
-        <div class="guide-step" data-step="8">
-            <div class="guide-step-icon">🎨</div>
-            <div class="guide-step-content">
-                <h3>Customize</h3>
-                <p>Fine-tune your captions with professional fonts, colors, positions, and animations. Preview changes in real-time before exporting.</p>
-            </div>
-        </div>
-        <div class="guide-step" data-step="9">
-            <div class="guide-step-icon">👁️</div>
-            <div class="guide-step-content">
-                <h3>Preview</h3>
-                <p>Watch your final clips with captions burned in. Review everything before downloading to make sure it's perfect.</p>
-            </div>
-        </div>
-        <div class="guide-step" data-step="10">
-            <div class="guide-step-icon">⬇️</div>
-            <div class="guide-step-content">
-                <h3>Download</h3>
-                <p>Download individual clips or grab everything as a ZIP. Export in your preferred quality and share instantly.</p>
-            </div>
-        </div>
-        <div class="guide-step" data-step="11">
-            <div class="guide-step-icon">💬</div>
-            <div class="guide-step-content">
-                <h3>Caption Studio</h3>
-                <p>Open any video in the standalone Caption Studio editor. Add, edit, and time captions. Use search & replace, auto-split, and export SRT/VTT independently of video rendering.</p>
-            </div>
-        </div>
-        <div class="guide-step" data-step="12">
-            <div class="guide-step-icon">📺</div>
-            <div class="guide-step-content">
-                <h3>YouTube Desk</h3>
-                <p>Upload your final videos directly to YouTube. Connect your Google account, edit metadata, schedule uploads, and track history — all from the YouTube Desk.</p>
-            </div>
-        </div>
-    </div>
+        function updateGuideProgress() {
+            const percent = Math.round((currentGuideStep / totalGuideSteps) * 100);
+            guideProgressFill.style.width = `${percent}%`;
+            guideProgressText.textContent = `Step ${currentGuideStep} of ${totalGuideSteps}`;
+        }
 
-    <!-- Navigation -->
-    <div class="guide-nav">
-        <button class="btn btn-secondary" id="guidePrev" hidden>← Previous</button>
-        <button class="btn btn-primary" id="guideNext">Next →</button>
-        <a href="/dashboard" class="btn btn-primary" id="guideStart" hidden>Start Creating →</a>
-        <button class="btn btn-secondary" id="guideSkip">Skip Guide</button>
-    </div>
-</main>
+        function showGuideStep(step) {
+            currentGuideStep = step;
+            guideSteps.forEach((el, idx) => {
+                el.style.display = (idx + 1 === step) ? 'flex' : 'none';
+            });
 
-<footer class="footer">
-    <p>© 2026 UpClip Studio. Built for creators.</p>
-</footer>
+            guidePrev.hidden = (step === 1);
+            guideNext.hidden = (step === totalGuideSteps);
+            guideStart.hidden = (step !== totalGuideSteps);
 
-<script>
-    // ============================================
-    // User Guide Navigation
-    // ============================================
-    const guideSteps = document.querySelectorAll('.guide-step');
-    const guidePrev = document.getElementById('guidePrev');
-    const guideNext = document.getElementById('guideNext');
-    const guideStart = document.getElementById('guideStart');
-    const guideSkip = document.getElementById('guideSkip');
-    const guideProgressFill = document.getElementById('guideProgressFill');
-    const guideProgressText = document.getElementById('guideProgressText');
+            updateGuideProgress();
+        }
 
-    let currentGuideStep = 1;
-    const totalGuideSteps = guideSteps.length;
-
-    function updateGuideProgress() {
-        const percent = Math.round((currentGuideStep / totalGuideSteps) * 100);
-        guideProgressFill.style.width = `${percent}%`;
-        guideProgressText.textContent = `Step ${currentGuideStep} of ${totalGuideSteps}`;
-    }
-
-    function showGuideStep(step) {
-        currentGuideStep = step;
-        guideSteps.forEach((el, idx) => {
-            el.classList.remove('active');
-            if (idx + 1 === step) el.classList.add('active');
+        guideNext.addEventListener('click', () => {
+            if (currentGuideStep < totalGuideSteps) {
+                showGuideStep(currentGuideStep + 1);
+            }
         });
 
-        guidePrev.hidden = step === 1;
-        guideNext.hidden = step === totalGuideSteps;
-        guideStart.hidden = step !== totalGuideSteps;
+        guidePrev.addEventListener('click', () => {
+            if (currentGuideStep > 1) {
+                showGuideStep(currentGuideStep - 1);
+            }
+        });
+
+        guideSkip.addEventListener('click', () => {
+            window.location.href = '/';
+        });
 
         updateGuideProgress();
-    }
-
-    guideNext.addEventListener('click', () => {
-        if (currentGuideStep < totalGuideSteps) {
-            showGuideStep(currentGuideStep + 1);
-        }
-    });
-
-    guidePrev.addEventListener('click', () => {
-        if (currentGuideStep > 1) {
-            showGuideStep(currentGuideStep - 1);
-        }
-    });
-
-    guideSkip.addEventListener('click', () => {
-        window.location.href = '/';
-    });
-
-    updateGuideProgress();
-</script>
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>lucide.createIcons();</script>
 </body>
 </html>

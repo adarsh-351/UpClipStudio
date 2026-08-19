@@ -1,58 +1,595 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Caption Studio</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" crossorigin href="/static/caption-studio/assets/index-BsUBBpfo.css">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', sans-serif; background: #0a0a0f; }
-    #root { min-height: 100vh; }
-    .spinner {
-      display: inline-block;
-      width: 16px;
-      height: 16px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caption Studio 2.0 | UpClip Studio</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=DM+Sans:ital,wght@0,400;0,700;0,900;1,400&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&family=Manrope:wght@500;700;800&family=Montserrat:wght@700;800;900&family=Plus+Jakarta+Sans:wght@600;700;800&family=Poppins:wght@600;700;800;900&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        .font-option-inter { font-family: 'Inter', sans-serif; font-weight: 700; }
+        .font-option-anton { font-family: 'Anton', sans-serif; }
+        .font-option-bebas { font-family: 'Bebas Neue', sans-serif; }
+        .font-option-montserrat { font-family: 'Montserrat', sans-serif; font-weight: 800; }
+        .font-option-poppins { font-family: 'Poppins', sans-serif; font-weight: 800; }
+        .font-option-dmsans { font-family: 'DM Sans', sans-serif; font-weight: 700; }
+        .font-option-manrope { font-family: 'Manrope', sans-serif; font-weight: 700; }
+        .font-option-jakarta { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; }
+        .font-option-roboto { font-family: 'Roboto', sans-serif; font-weight: 700; }
+        .font-option-mono { font-family: 'JetBrains Mono', monospace; }
+        .font-option-arialblk { font-family: 'Arial Black', sans-serif; font-weight: 900; }
+        
+        .stepper-btn {
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--surface-2);
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+        .stepper-btn:hover {
+            background: var(--surface-3);
+            border-color: var(--primary);
+        }
+        .caption-context-menu {
+            position: fixed;
+            z-index: 99999;
+            background: var(--surface-1);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 4px;
+            min-width: 160px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: none;
+        }
+        .caption-context-menu-item {
+            padding: 6px 12px;
+            font-size: 12px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .caption-context-menu-item:hover {
+            background: var(--primary);
+            color: #FFFFFF;
+        }
+        .caption-context-menu-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 4px 0;
+        }
+    </style>
 </head>
 <body>
-  <div id="root"></div>
-  <script>
-    window.__UPCLIP_INITIAL_STATE__ = {
-      project_id: {{ project_id or '' }},
-      source_filename: {{ source_filename or '' }},
-      inherited_style: {{ inherited_style | tojson if inherited_style else 'null' }},
-      caption_files: {{ caption_files | tojson if caption_files else '[]' }},
-    };
-    {% if preload_video %}
-    (function() {
-      var videoData = {{ preload_video | tojson }};
-      try {
-        // Populate __CAPTION_STUDIO_PRELOAD__ so the React PreloadRouter can pick it up
-        window.__CAPTION_STUDIO_PRELOAD__ = {
-          video: videoData.filename,
-          project_id: window.__UPCLIP_INITIAL_STATE__.project_id || "",
-        };
-        window.history.replaceState({ video: videoData, project_id: window.__UPCLIP_INITIAL_STATE__.project_id, src: videoData.filename }, "");
-        setTimeout(function() {
-          window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state }));
-        }, 100);
-      } catch (e) {}
-    })();
-    {% endif %}
-    {% if preload %}
-    window.__CAPTION_STUDIO_PRELOAD__ = {{ preload | tojson }};
-    {% endif %}
-  </script>
-  <script type="module" crossorigin src="/static/caption-studio/assets/index-Cz4KrDf4.js"></script>
+    <div class="app-shell editor-layout caption-studio-layout">
+        <!-- Top Bar -->
+        <header class="app-topbar">
+            <div class="topbar-left">
+                <a href="/studio" class="btn btn-secondary btn-sm" style="display:flex; align-items:center; gap:var(--space-1); padding: 6px 10px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    <span>Studio Hub</span>
+                </a>
+                <div class="topbar-divider"></div>
+                <div class="topbar-workspace-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <span id="projectNameText" class="project-title">Caption Studio 2.0</span>
+                    <span id="dirtyIndicator" style="color: var(--primary); font-weight: 800; margin-left: 2px; display: none;">*</span>
+                </div>
+                <span id="saveStatus" style="font-size:11px; color: var(--text-muted); margin-left: var(--space-3); transition: opacity 0.2s;">Saved</span>
+            </div>
+
+            <div class="topbar-right" style="gap: var(--space-2);">
+                <button class="btn btn-secondary btn-sm" id="captionCommandPaletteBtn" title="Command Palette (Ctrl+K)" style="display:flex; align-items:center; gap:4px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <span style="font-size:10px; opacity:0.8;">Ctrl+K</span>
+                </button>
+                <button class="btn btn-icon" id="undoBtn" data-tooltip="Undo (Ctrl+Z)" data-hotkey="Ctrl+Z">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+                </button>
+                <button class="btn btn-icon" id="redoBtn" data-tooltip="Redo (Ctrl+Shift+Z)" data-hotkey="Ctrl+Shift+Z">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+                </button>
+                
+                <div class="topbar-divider"></div>
+                
+                <button class="btn btn-secondary btn-sm" id="autoCaptionBtn" style="display:flex; align-items:center; gap:var(--space-1);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>
+                    <span>Auto Caption</span>
+                </button>
+
+                <button class="btn btn-secondary btn-sm" id="importSubBtn" style="display:flex; align-items:center; gap:var(--space-1);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="17"/></svg>
+                    <span>Import Sub</span>
+                </button>
+
+                <button class="btn btn-secondary btn-sm" id="exportSubBtn" style="display:flex; align-items:center; gap:var(--space-1);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <span>Export SRT/VTT</span>
+                </button>
+
+                <button class="btn btn-secondary btn-sm" id="saveBtn" style="display:flex; align-items:center; gap:var(--space-1);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    <span>Save</span>
+                </button>
+
+                <button class="btn btn-primary btn-sm" id="exportVideoBtn" style="display:flex; align-items:center; gap:var(--space-1);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    <span>Export Video</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="app-main">
+            <!-- 3-Pane Content Area -->
+            <div class="editor-workspace-content caption-studio-grid">
+                <!-- Left Pane: Captions & Style Presets Tabs -->
+                <div class="editor-left-pane caption-left-pane">
+                    <div class="pane-tab-headers">
+                        <button class="pane-tab-btn active" id="tabBtnCaptions" data-tab="captions">
+                            <span>Captions</span>
+                            <span class="tab-badge" id="captionsCountBadge">0</span>
+                        </button>
+                        <button class="pane-tab-btn" id="tabBtnStyles" data-tab="styles">
+                            <span>Presets</span>
+                        </button>
+                        <button class="pane-tab-btn" id="tabBtnCustomStyles" data-tab="custom">
+                            <span>Saved Styles</span>
+                        </button>
+                    </div>
+
+                    <!-- Captions List Tab Body -->
+                    <div class="pane-body tab-content active" id="tabContentCaptions">
+                        <!-- Search & Replace Controls -->
+                        <div class="caption-search-bar">
+                            <div class="search-input-wrap">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                <input type="text" id="captionSearchInput" placeholder="Search caption text..." class="input-field-sm">
+                            </div>
+                            <button class="btn btn-icon btn-sm" id="searchReplaceToggle" data-tooltip="Search & Replace">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m14 2 4 4-4 4"/><path d="M4 20v-2a4 4 0 0 1 4-4h10"/><path d="m10 22-4-4 4-4"/><path d="M20 4v2a4 4 0 0 1-4 4H6"/></svg>
+                            </button>
+                        </div>
+
+                        <!-- Replace Drawer (Hidden by default) -->
+                        <div class="replace-drawer" id="replaceDrawer" style="display:none;">
+                            <input type="text" id="captionReplaceInput" placeholder="Replace with..." class="input-field-sm" style="width:100%; margin-bottom:4px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <label style="font-size:10px; color:var(--text-muted); display:flex; align-items:center; gap:4px;">
+                                    <input type="checkbox" id="caseSensitiveCheck"> Match case
+                                </label>
+                                <button class="btn btn-secondary btn-sm" id="executeReplaceBtn" style="padding:2px 6px; font-size:10px;">Replace All</button>
+                            </div>
+                        </div>
+
+                        <div class="caption-actions-row">
+                            <button class="btn btn-secondary btn-sm" id="autoSplitBtn" style="font-size:11px; width:100%; justify-content:center;">
+                                ✂ Auto-Split (1-5 Words)
+                            </button>
+                            <button class="btn btn-secondary btn-sm" id="addCaptionBtn" style="font-size:11px; width:100%; justify-content:center;">
+                                + Add Caption
+                            </button>
+                        </div>
+
+                        <!-- Scrollable Segment Cards -->
+                        <div class="caption-segments-list" id="captionSegmentsList">
+                            <div class="empty-state-caption">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--text-muted); margin-bottom:var(--space-2);"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                <div>No captions found.</div>
+                                <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Click <b>Auto Caption</b> to transcribe audio with AI.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Style Presets Tab Body -->
+                    <div class="pane-body tab-content" id="tabContentStyles" style="display:none;">
+                        <div class="presets-grid" id="presetsGrid">
+                            <!-- Populated dynamically via JS with curated templates -->
+                        </div>
+                    </div>
+
+                    <!-- Custom Saved Styles Tab Body -->
+                    <div class="pane-body tab-content" id="tabContentCustomStyles" style="display:none;">
+                        <div style="margin-bottom: 8px;">
+                            <div style="display:flex; gap:4px;">
+                                <input type="text" id="customStyleNameInput" placeholder="Style name (e.g. My Podcast)..." class="input-field-sm" style="flex:1;">
+                                <button class="btn btn-primary btn-sm" id="saveCustomStyleBtn" style="font-size:11px;">Save Current</button>
+                            </div>
+                        </div>
+                        <div class="presets-grid" id="customStylesGrid">
+                            <!-- Populated dynamically with user custom styles -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center Pane: Interactive Video + Caption Canvas -->
+                <div class="editor-center-pane caption-center-pane">
+                    <div class="preview-canvas-wrapper" id="previewCanvasWrapper">
+                        <div class="aspect-ratio-selector-container">
+                            <select id="aspectRatioSelect" class="input-select btn-sm">
+                                <option value="9:16" selected>9:16 Shorts</option>
+                                <option value="16:9">16:9 Landscape</option>
+                                <option value="1:1">1:1 Square</option>
+                                <option value="4:5">4:5 Portrait</option>
+                            </select>
+                            <button id="toggleSafeGuide" class="btn btn-secondary btn-sm active" style="display:flex; align-items:center; gap:4px;">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+                                <span>Safe Guides</span>
+                            </button>
+                        </div>
+
+                        <!-- Interactive Canvas -->
+                        <div class="preview-canvas aspect-9-16" id="previewCanvas">
+                            <div class="video-transform-wrapper">
+                                <video id="captionVideoPlayer" src="" preload="auto" playsinline></video>
+                            </div>
+
+                            <!-- Live Interactive Draggable Caption Overlay -->
+                            <div class="live-caption-overlay" id="liveCaptionOverlay">
+                                <div class="caption-drag-handle" id="captionDragHandle" title="Click & Drag to reposition caption">
+                                    <div class="caption-text-content" id="captionTextContent">
+                                        <!-- Real-time word highlight spans are rendered here -->
+                                        <span class="placeholder-caption-text">Your Caption Appears Here</span>
+                                    </div>
+                                    <div class="caption-resize-handle" id="captionResizeHandle"></div>
+                                </div>
+                            </div>
+
+                            <!-- Short-form Safe Area Guide overlays -->
+                            <div class="canvas-safe-guides" id="canvasSafeGuides">
+                                <div class="guide-vertical-left"></div>
+                                <div class="guide-vertical-right"></div>
+                                <div class="guide-center-dot"></div>
+                                <div class="safe-zone-box">Safe Title Area</div>
+                            </div>
+                        </div>
+
+                        <!-- Transport Controls Bar -->
+                        <div class="player-controls-bar">
+                            <button class="control-btn" id="playBtn" data-tooltip="Play/Pause (Space)">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="play-icon"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="pause-icon" style="display:none;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                            </button>
+                            <div class="time-readout">
+                                <span id="currentTimeDisplay">00:00.00</span>
+                                <span class="readout-divider">/</span>
+                                <span id="durationDisplay">00:00.00</span>
+                            </div>
+                            <div class="controls-divider"></div>
+                            <div class="volume-controls">
+                                <button class="control-btn" id="muteBtn" data-tooltip="Mute">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="vol-icon"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mute-icon" style="display:none;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+                                </button>
+                                <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="80">
+                            </div>
+                            <div class="controls-divider"></div>
+                            <select id="playbackSpeedSelect" class="input-select btn-sm" style="width:70px;">
+                                <option value="0.5">0.5x</option>
+                                <option value="1.0" selected>1.0x</option>
+                                <option value="1.5">1.5x</option>
+                                <option value="2.0">2.0x</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Pane: Caption Inspector (Typography & Style Controls) -->
+                <div class="editor-right-pane caption-inspector-pane">
+                    <div class="pane-header" style="display:flex; justify-content:space-between; align-items:center;">
+                        <span>Caption Style Inspector</span>
+                        <div style="display:flex; gap:4px;">
+                            <button class="btn btn-secondary btn-xs" id="applyToTrackBtn" title="Apply this style to all captions on track" style="font-size:10px; padding:2px 6px;">Apply to All</button>
+                        </div>
+                    </div>
+                    <div class="pane-body">
+                        <!-- Typography Section -->
+                        <div class="settings-group-card">
+                            <div class="settings-group-title">Typography & Font Preview</div>
+                            <div class="form-row">
+                                <label>Font Family</label>
+                                <select id="fontFamilySelect" class="input-select" style="width:100%;">
+                                    <optgroup label="Sans Serif">
+                                        <option value="Inter" class="font-option-inter" selected>Inter — Clean Sans</option>
+                                        <option value="Roboto" class="font-option-roboto">Roboto — Standard</option>
+                                        <option value="Arial" style="font-family: Arial;">Arial — Classic</option>
+                                    </optgroup>
+                                    <optgroup label="Bold / High Impact">
+                                        <option value="Anton" class="font-option-anton">Anton — High Impact</option>
+                                        <option value="Arial Black" class="font-option-arialblk">Arial Black — Ultra Heavy</option>
+                                        <option value="Montserrat" class="font-option-montserrat">Montserrat — Bold Modern</option>
+                                    </optgroup>
+                                    <optgroup label="Display / Condensed">
+                                        <option value="Bebas Neue" class="font-option-bebas">Bebas Neue — Tall Condensed</option>
+                                        <option value="Poppins" class="font-option-poppins">Poppins — Geometric Social</option>
+                                    </optgroup>
+                                    <optgroup label="Modern & Social">
+                                        <option value="Plus Jakarta Sans" class="font-option-jakarta">Plus Jakarta Sans — Premium</option>
+                                        <option value="Manrope" class="font-option-manrope">Manrope — Modern Clean</option>
+                                        <option value="DM Sans" class="font-option-dmsans">DM Sans — Editorial</option>
+                                    </optgroup>
+                                    <optgroup label="Monospace">
+                                        <option value="JetBrains Mono" class="font-option-mono">JetBrains Mono — Monospace</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+
+                            <div class="form-row">
+                                <label>Font Size (<span id="fontSizeDisplay">34</span>px)</label>
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <button class="stepper-btn" id="fontSizeDecBtn" type="button">−</button>
+                                    <input type="range" id="fontSizeRange" min="14" max="90" value="34" style="flex:1;">
+                                    <button class="stepper-btn" id="fontSizeIncBtn" type="button">+</button>
+                                    <input type="number" id="fontSizeNum" value="34" class="input-field-sm" style="width:48px;">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <label>Caption Scale (<span id="captionScaleDisplay">100</span>%)</label>
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <button class="stepper-btn" id="scaleDecBtn" type="button">−</button>
+                                    <input type="range" id="captionScaleRange" min="50" max="200" value="100" style="flex:1;">
+                                    <button class="stepper-btn" id="scaleIncBtn" type="button">+</button>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <label>Font Weight</label>
+                                <select id="fontWeightSelect" class="input-select" style="width:100%;">
+                                    <option value="400">Regular (400)</option>
+                                    <option value="600">SemiBold (600)</option>
+                                    <option value="700">Bold (700)</option>
+                                    <option value="800" selected>Extra Bold (800)</option>
+                                    <option value="900">Black (900)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-row">
+                                <label>Text Alignment</label>
+                                <div class="btn-group-segmented" style="display:flex; width:100%; gap:2px;">
+                                    <button class="btn btn-secondary btn-sm segment-btn" data-align="left" style="flex:1;">Left</button>
+                                    <button class="btn btn-secondary btn-sm segment-btn active" data-align="center" style="flex:1;">Center</button>
+                                    <button class="btn btn-secondary btn-sm segment-btn" data-align="right" style="flex:1;">Right</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Colors & Highlight Section -->
+                        <div class="settings-group-card" style="margin-top:var(--space-3);">
+                            <div class="settings-group-title">Colors & Word Highlight</div>
+                            <div class="form-row" style="display:flex; justify-content:space-between; align-items:center;">
+                                <label>Primary Text Color</label>
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <input type="color" id="textColorPicker" value="#FFFFFF" class="color-picker-input">
+                                    <input type="text" id="textColorHex" value="#FFFFFF" class="input-field-sm" style="width:65px;">
+                                </div>
+                            </div>
+
+                            <div class="form-row" style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                                <label>Active Word Highlight</label>
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <input type="color" id="highlightColorPicker" value="#FBBF24" class="color-picker-input">
+                                    <input type="text" id="highlightColorHex" value="#FBBF24" class="input-field-sm" style="width:65px;">
+                                </div>
+                            </div>
+
+                            <div class="form-row" style="margin-top:8px;">
+                                <label>Highlight Effect Mode</label>
+                                <select id="highlightStyleSelect" class="input-select" style="width:100%;">
+                                    <option value="text_color" selected>Text Color Change</option>
+                                    <option value="background">Background Box Highlight</option>
+                                    <option value="scale">Scale Emphasis</option>
+                                    <option value="accent">Accent Glow</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Background Box Section -->
+                        <div class="settings-group-card" style="margin-top:var(--space-3);">
+                            <div class="settings-group-title">Background Box</div>
+                            <div class="form-row" style="display:flex; justify-content:space-between; align-items:center;">
+                                <label>Box Color</label>
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <input type="color" id="bgColorPicker" value="#000000" class="color-picker-input">
+                                    <input type="text" id="bgColorHex" value="#000000" class="input-field-sm" style="width:65px;">
+                                </div>
+                            </div>
+
+                            <div class="form-row" style="margin-top:8px;">
+                                <label>Box Opacity (<span id="bgOpacityDisplay">0</span>%)</label>
+                                <input type="range" id="bgOpacityRange" min="0" max="100" value="0">
+                            </div>
+
+                            <div class="form-row" style="margin-top:8px;">
+                                <label>Corner Radius (<span id="bgRadiusDisplay">8</span>px)</label>
+                                <input type="range" id="bgRadiusRange" min="0" max="24" value="8">
+                            </div>
+                        </div>
+
+                        <!-- Stroke & Shadow Section -->
+                        <div class="settings-group-card" style="margin-top:var(--space-3);">
+                            <div class="settings-group-title">Stroke & Shadow</div>
+                            <div class="form-row">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                    <label>Outline Stroke (<span id="strokeWidthDisplay">3</span>px)</label>
+                                    <input type="color" id="strokeColorPicker" value="#000000" class="color-picker-input" style="width:24px; height:24px;">
+                                </div>
+                                <input type="range" id="strokeWidthRange" min="0" max="8" value="3">
+                            </div>
+
+                            <div class="form-row" style="margin-top:8px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                    <label>Shadow Blur (<span id="shadowBlurDisplay">4</span>px)</label>
+                                    <input type="color" id="shadowColorPicker" value="#000000" class="color-picker-input" style="width:24px; height:24px;">
+                                </div>
+                                <input type="range" id="shadowBlurRange" min="0" max="15" value="4">
+                            </div>
+                        </div>
+
+                        <!-- Position & Animation Section -->
+                        <div class="settings-group-card" style="margin-top:var(--space-3);">
+                            <div class="settings-group-title">Position & Animation</div>
+                            <div class="form-row">
+                                <label>Position Preset</label>
+                                <div class="btn-group-segmented" style="display:flex; width:100%; gap:2px;">
+                                    <button class="btn btn-secondary btn-sm pos-preset-btn" data-pos="top" style="flex:1; font-size:10px;">Top</button>
+                                    <button class="btn btn-secondary btn-sm pos-preset-btn" data-pos="middle" style="flex:1; font-size:10px;">Center</button>
+                                    <button class="btn btn-secondary btn-sm pos-preset-btn" data-pos="lower_third" style="flex:1; font-size:10px;">Lower ⅓</button>
+                                    <button class="btn btn-secondary btn-sm pos-preset-btn active" data-pos="bottom" style="flex:1; font-size:10px;">Bottom</button>
+                                </div>
+                            </div>
+
+                            <div class="form-row" style="margin-top:8px;">
+                                <label>Animation Preset</label>
+                                <select id="animationSelect" class="input-select" style="width:100%;">
+                                    <option value="pop" selected>Pop (Zoom Bounce)</option>
+                                    <option value="fade_in">Fade In</option>
+                                    <option value="fade_out">Fade Out</option>
+                                    <option value="scale_in">Scale In</option>
+                                    <option value="slide_up">Slide Up</option>
+                                    <option value="slide_down">Slide Down</option>
+                                    <option value="slide_left">Slide Left</option>
+                                    <option value="slide_right">Slide Right</option>
+                                    <option value="bounce">Bounce</option>
+                                    <option value="word_reveal">Word Reveal</option>
+                                    <option value="character_reveal">Character Reveal</option>
+                                    <option value="smooth_reveal">Smooth Reveal</option>
+                                    <option value="none">None (Static)</option>
+                                </select>
+                            </div>
+
+                            <button id="resetStyleBtn" class="btn btn-secondary btn-sm" style="margin-top:var(--space-2); width:100%; justify-content:center;">Reset Style to Default</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Caption Timeline Panel -->
+            <footer class="editor-bottom-timeline caption-timeline-footer">
+                <div class="timeline-toolbar">
+                    <div class="toolbar-left">
+                        <button class="btn btn-icon btn-sm active" id="snapToggle" data-tooltip="Snap Captions (S)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H5zm12 6H7v2h10V9zm0 4H7v2h10v-2z"/></svg>
+                        </button>
+                        <div class="timeline-timer-readout" id="timelineTimeReadout">00:00.00</div>
+                    </div>
+
+                    <div class="toolbar-center" id="wordBreakdownBar" style="display:flex; align-items:center; gap:4px; overflow-x:auto; max-width:50%;">
+                        <!-- Word timing chips for selected segment render here -->
+                    </div>
+
+                    <div class="toolbar-right">
+                        <div class="zoom-controls">
+                            <span class="zoom-label">Zoom</span>
+                            <input type="range" id="timelineZoom" class="zoom-slider" min="10" max="120" value="40">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scrollable Track Workspace -->
+                <div class="timeline-tracks-area" id="timelineTracksArea">
+                    <div class="time-ruler-track" id="timeRulerTrack">
+                        <canvas id="rulerCanvas" style="width:100%; height:100%; display:block;"></canvas>
+                    </div>
+
+                    <div class="tracks-container">
+                        <!-- Playhead indicator -->
+                        <div class="timeline-playhead-line" id="timelinePlayhead">
+                            <div class="playhead-handle"></div>
+                        </div>
+
+                        <!-- Caption Segments Track -->
+                        <div class="track-row" id="captionTrackRow" style="height:70px;">
+                            <div class="track-header">
+                                <span class="track-name">CC</span>
+                                <span class="track-desc">Captions</span>
+                            </div>
+                            <div class="track-lane" id="captionTrackLane">
+                                <!-- Caption blocks rendered dynamically with trim handles -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Subtitle File Input for Import -->
+    <input type="file" id="subFileInput" accept=".srt,.vtt" style="display:none;">
+
+    <!-- Video Export Modal Dialog (ONLY visible on user export click) -->
+    <div class="modal-overlay" id="exportModal" hidden>
+        <div class="modal" style="max-width: 460px;">
+            <div class="modal-header">
+                <h3>Export Video with Burned Captions</h3>
+                <button class="modal-close-btn" id="exportModalClose" type="button">✕</button>
+            </div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:var(--space-3); padding-top:var(--space-2);">
+                <div style="font-size:12px; color:var(--text-secondary);">
+                    The exported video burns the exact typography, colors, animations, positioning, and synchronized word-level karaoke highlights configured in Caption Studio.
+                </div>
+
+                <div class="form-row">
+                    <label>Resolution & Aspect Preset</label>
+                    <select id="exportAspectPreset" class="input-select" style="width:100%;">
+                        <option value="9:16_1080p" selected>9:16 Vertical Shorts (1080×1920)</option>
+                        <option value="original">Original Video Resolution</option>
+                        <option value="16:9_1080p">16:9 Widescreen (1920×1080)</option>
+                        <option value="1:1_1080p">1:1 Square (1080×1080)</option>
+                        <option value="draft_720p">720p Fast Draft</option>
+                    </select>
+                </div>
+
+                <div class="export-status-panel" id="exportStatusPanel" style="display:none; background:var(--surface-2); padding:var(--space-3); border-radius:var(--radius-sm); border:1px solid var(--border);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:600;">
+                        <span id="exportStatusText">Burning animated captions with FFmpeg...</span>
+                        <span id="exportPercentText">0%</span>
+                    </div>
+                    <div class="progress-bar-container" style="height:6px; background:var(--border-strong); border-radius:var(--radius-full); margin-top:8px; overflow:hidden;">
+                        <div id="exportProgressBar" style="width:0%; height:100%; background:var(--primary); transition: width 0.2s;"></div>
+                    </div>
+                </div>
+
+                <div class="modal-actions" style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-3);">
+                    <button class="btn btn-secondary btn-sm" id="exportCancelBtn">Cancel</button>
+                    <button class="btn btn-primary btn-sm" id="exportStartBtn">✦ Start Render</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Caption Segment Context Menu -->
+    <div class="caption-context-menu" id="captionContextMenu">
+        <div class="caption-context-menu-item" id="ctxEdit">✏ Edit Text</div>
+        <div class="caption-context-menu-item" id="ctxSplit">✂ Split at Playhead</div>
+        <div class="caption-context-menu-item" id="ctxMerge">⧉ Merge with Next</div>
+        <div class="caption-context-menu-item" id="ctxDuplicate">⎘ Duplicate (Ctrl+D)</div>
+        <div class="caption-context-menu-divider"></div>
+        <div class="caption-context-menu-item" id="ctxApplyStyle">✦ Apply Active Style</div>
+        <div class="caption-context-menu-divider"></div>
+        <div class="caption-context-menu-item" id="ctxDelete" style="color:var(--error);">🗑 Delete (Del)</div>
+    </div>
+
+    <!-- Data Injection for static parser context sync -->
+    <div id="captionContextData" 
+         data-project='{% if project %}{{ project|tojson }}{% else %}null{% endif %}'
+         data-preload='{% if preload_video %}{{ preload_video|tojson }}{% else %}null{% endif %}'
+         data-source-file="{{ source_filename or '' }}"
+         hidden></div>
+
+    <script src="{{ url_for('static', filename='js/app_framework.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/caption_studio.js') }}"></script>
 </body>
 </html>

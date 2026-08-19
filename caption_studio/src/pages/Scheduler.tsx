@@ -250,7 +250,7 @@ export default function Scheduler() {
                 </button>
                 <button
                   onClick={() => handleDelete(s.id)}
-                  className="btn-secondary text-xs py-1 text-red-400"
+                   className="btn-secondary text-xs py-1 text-brand-primary"
                   title="Cancel"
                 >
                   <XCircle className="w-3 h-3" />

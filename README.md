@@ -105,14 +105,14 @@ Turn any video into viral shorts automatically — scene detection, smart clippi
 
 | Layer       | Technology                                  |
 |-------------|---------------------------------------------|
-| Backend     | Python, Flask, Flask-Session                |
+| Backend     | Python, Flask, SQLAlchemy, SQLite           |
 | AI / ML     | OpenAI Whisper, OpenCV, Torch, scikit-learn |
-| Video       | FFmpeg, MoviePy, imageio-ffmpeg             |
-| Frontend    | HTML, CSS, Vanilla JavaScript               |
+| Video/Audio | FFmpeg, PIL Vector Engine, MoviePy          |
+| Architecture| Multi-track Timeline, Motion Graphics Studio|
+| Frontend    | HTML5, CSS Custom Properties, Vanilla JS    |
 | Translation | deep-translator (Google Translate backend)  |
 | YouTube     | yt-dlp (downloads), Google API (uploads)   |
 | OAuth       | google-auth, google-api-python-client      |
-| Frontend UI | React + Vite + Tailwind CSS + Framer Motion|
 
 ---
 

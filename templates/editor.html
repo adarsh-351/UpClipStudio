@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Editor & Studio | UpClip Studio</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=DM+Sans:wght@500;700;900&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;800&family=Manrope:wght@600;700;800&family=Montserrat:wght@700;800;900&family=Plus+Jakarta+Sans:wght@600;700;800&family=Poppins:wght@600;700;800;900&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-shell editor-layout">
+        <!-- Top Bar -->
+        <header class="app-topbar">
+            <div class="topbar-left">
+                <a href="/studio" class="btn btn-secondary btn-sm" style="display:flex; align-items:center; gap:var(--space-1); padding: 6px 10px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    <span>Studio Hub</span>
+                </a>
+                <div class="topbar-divider"></div>
+                <div class="topbar-workspace-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><rect x="7" y="7" width="3" height="9"/><rect x="14" y="7" width="3" height="5"/></svg>
+                    <span id="projectNameText" class="project-title">Video Editor</span>
+                    <span id="dirtyIndicator" style="color: var(--primary); font-weight: 800; margin-left: 2px; display: none;">*</span>
+                </div>
+                <span id="saveStatus" style="font-size:11px; color: var(--text-muted); margin-left: var(--space-3); transition: opacity 0.2s;">Saved</span>
+                <div class="topbar-divider"></div>
+                <div class="workspace-switcher-wrapper" style="display:flex; align-items:center; gap:6px;">
+                    <span style="font-size:11px; color:var(--text-muted);">Workspace:</span>
+                    <select id="workspaceSwitcherSelect" class="input-select" style="font-size:11px; padding:3px 8px; height:28px;">
+                        <option value="editing" selected>✂ Editing</option>
+                        <option value="review">✓ Review & Approval</option>
+                        <option value="captions">💬 Audio & Captions</option>
+                        <option value="graphics">✦ Graphics & Motion</option>
+                        <option value="ai">⚡ AI Automation</option>
+                        <option value="minimal">⬛ Minimal Canvas</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="topbar-right" style="gap: var(--space-2);">
+                <button class="btn btn-secondary btn-sm" id="aiCopilotTopBtn" title="AI Editing Copilot (Ctrl+I)" style="display:flex; align-items:center; gap:4px; border-color:rgba(139,92,246,0.4); background:rgba(139,92,246,0.1); color:#A78BFA;">
+                    <span style="font-size:12px;">✦</span>
+                    <span style="font-weight:700;">AI Copilot</span>
+                </button>
+                <button class="btn btn-secondary btn-sm" id="editorCommandPaletteBtn" title="Quick Command Palette (Ctrl+K)" style="display:flex; align-items:center; gap:4px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <span style="font-size:10px; opacity:0.8;">Ctrl+K</span>
+                </button>
+                <button class="btn btn-icon" id="undoBtn" data-tooltip="Undo" data-hotkey="Ctrl+Z">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+                </button>
+                <button class="btn btn-icon" id="redoBtn" data-tooltip="Redo" data-hotkey="Ctrl+Shift+Z">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+                </button>
+                <div class="topbar-divider"></div>
+                <button class="btn btn-secondary btn-sm" id="versionMenuBtn" title="Version Snapshots & History">
+                    <span>Versions</span>
+                </button>
+                <button class="btn btn-secondary btn-sm" id="saveBtn" style="display:flex; align-items:center; gap:var(--space-1);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    <span>Save</span>
+                </button>
+                <button class="btn btn-secondary btn-sm" id="mediaHealthBtn" title="Media Assets & Health Check">
+                    <span>Media</span>
+                </button>
+                <button class="btn btn-secondary btn-sm" id="renderQueueTopBtn" style="display:flex; align-items:center; gap:4px;" title="View Background Render Queue">
+                    <span id="queueBadge" class="ai-score-badge" style="display:none; font-size:9px; padding:1px 5px;">0</span>
+                    <span>Queue</span>
+                </button>
+                <button class="btn btn-secondary btn-sm" id="duplicateProjectBtn" title="Duplicate Project">
+                    <span>Duplicate</span>
+                </button>
+                <button class="btn btn-secondary btn-sm" id="saveAsTemplateBtn" title="Save Project as Template">
+                    <span>Save Template</span>
+                </button>
+                <button class="btn btn-icon" id="systemDiagBtn" title="System Diagnostics" style="height:28px; width:28px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                </button>
+                <button class="btn btn-primary btn-sm" id="exportBtn" style="display:flex; align-items:center; gap:var(--space-1);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="17"/></svg>
+                    <span>Export</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="app-main">
+            <!-- Sidebar Left Tool Navigation -->
+            <aside class="app-sidebar editor-toolbar-sidebar" style="width: 58px; min-width: 58px;">
+                <nav class="sidebar-nav" style="align-items: center; padding: var(--space-3) 0; gap: var(--space-2);">
+                    <button class="sidebar-tool-btn active" id="toolMedia" data-tool="media" data-tooltip="Media Library (V)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>
+                    </button>
+                    <button class="sidebar-tool-btn" id="toolTemplates" data-tool="templates" data-tooltip="Templates & Brand Kit (P)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                    </button>
+                    <button class="sidebar-tool-btn" id="toolAI" data-tool="ai" data-tooltip="AI Assistant & Highlights (AI)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                    </button>
+                    <button class="sidebar-tool-btn" id="toolAudio" data-tool="audio" data-tooltip="Audio Studio & SFX (A)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                    </button>
+                    <button class="sidebar-tool-btn" id="toolGraphics" data-tool="graphics" data-tooltip="Graphics & Shapes (G)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    </button>
+                    <button class="sidebar-tool-btn" id="toolText" data-tool="text" data-tooltip="Text & Titles (T)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+                    </button>
+                    <button class="sidebar-tool-btn" id="toolLayers" data-tool="layers" data-tooltip="Layers Manager (L)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                    </button>
+                    <button class="sidebar-tool-btn" id="toolNotes" data-tool="notes" data-tooltip="Notes, Markers & Reviews (N)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    </button>
+                    <button class="sidebar-tool-btn" id="toolIntelligence" data-tool="intelligence" data-tooltip="Content Intelligence & Shorts Factory (I)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                    </button>
+                </nav>
+            </aside>
+
+            <!-- Three Panel Middle Area -->
+            <div class="editor-workspace-content editor-layout-3pane">
+                <!-- Left panel: Dynamic Content based on Tool Selected -->
+                <div class="editor-left-pane">
+                    <!-- 1. Media Library Pane -->
+                    <div class="editor-subpane active" id="subpaneMedia">
+                        <div class="pane-header">Media Library</div>
+                        <div class="pane-body">
+                            <div id="mediaLibraryList" class="media-library-grid">
+                                <div class="library-item empty">No media loaded</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 1B. Templates & Presets Library Pane -->
+                    <div class="editor-subpane" id="subpaneTemplates" style="display:none;">
+                        <div class="pane-header" style="display:flex; justify-content:space-between; align-items:center;">
+                            <span>Templates & Presets</span>
+                            <span class="ai-mode-tag" style="background:rgba(59,130,246,0.15); color:#3B82F6; border-color:rgba(59,130,246,0.35);">PRESET HUB</span>
+                        </div>
+                        <div class="pane-body">
+                            <!-- Preset Category Navigation Chips -->
+                            <div class="graphics-category-chips template-nav-chips">
+                                <button class="chip-btn active" data-tab="templates">Templates</button>
+                                <button class="chip-btn" data-tab="brand">Brand Kit</button>
+                                <button class="chip-btn" data-tab="captions">Captions</button>
+                                <button class="chip-btn" data-tab="graphics">Graphics</button>
+                                <button class="chip-btn" data-tab="audio">Audio</button>
+                                <button class="chip-btn" data-tab="export">Export</button>
+                            </div>
+
+                            <!-- 1. Templates Tab View -->
+                            <div class="template-tab-view" id="tplTabViewTemplates">
+                                <div class="template-cards-grid" id="templatesListGrid">
+                                    <!-- Populated dynamically with template cards -->
+                                </div>
+                            </div>
+
+                            <!-- 2. Brand Kit Tab View -->
+                            <div class="template-tab-view" id="tplTabViewBrand" style="display:none;">
+                                <div class="settings-group-card">
+                                    <div class="settings-group-title">Brand Color Palette</div>
+                                    <div class="brand-colors-row" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:6px; margin-top:6px;">
+                                        <div class="color-picker-box">
+                                            <span style="font-size:9px; color:var(--text-muted);">Primary</span>
+                                            <input type="color" id="brandPrimaryColor" value="#8B5CF6" class="color-picker-input" style="width:100%; height:28px;">
+                                        </div>
+                                        <div class="color-picker-box">
+                                            <span style="font-size:9px; color:var(--text-muted);">Secondary</span>
+                                            <input type="color" id="brandSecondaryColor" value="#3B82F6" class="color-picker-input" style="width:100%; height:28px;">
+                                        </div>
+                                        <div class="color-picker-box">
+                                            <span style="font-size:9px; color:var(--text-muted);">Accent</span>
+                                            <input type="color" id="brandAccentColor" value="#10B981" class="color-picker-input" style="width:100%; height:28px;">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="settings-group-card" style="margin-top:var(--space-2);">
+                                    <div class="settings-group-title">Brand Typography</div>
+                                    <div class="form-row">
+                                        <label>Primary Font</label>
+                                        <select id="brandPrimaryFont" class="input-select" style="width:100%;">
+                                            <option value="Inter" selected>Inter</option>
+                                            <option value="Anton">Anton</option>
+                                            <option value="Montserrat">Montserrat</option>
+                                            <option value="DM Sans">DM Sans</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <button class="btn btn-primary btn-sm" id="applyBrandKitBtn" style="width:100%; justify-content:center; margin-top:var(--space-2);">
+                                    ✦ Apply Brand to Project
+                                </button>
+                            </div>
+
+                            <!-- 3. Captions Presets Tab View -->
+                            <div class="template-tab-view" id="tplTabViewCaptions" style="display:none;">
+                                <div class="caption-presets-grid" id="captionPresetsGrid">
+                                    <!-- Populated dynamically with caption preset cards -->
+                                </div>
+                            </div>
+
+                            <!-- 4. Graphics Presets Tab View -->
+                            <div class="template-tab-view" id="tplTabViewGraphics" style="display:none;">
+                                <div class="graphics-presets-grid" id="graphicsPresetsGrid">
+                                    <!-- Populated dynamically with graphic preset cards -->
+                                </div>
+                            </div>
+
+                            <!-- 5. Audio Presets Tab View -->
+                            <div class="template-tab-view" id="tplTabViewAudio" style="display:none;">
+                                <div class="audio-presets-grid" id="audioPresetsGrid">
+                                    <!-- Populated dynamically with audio preset cards -->
+                                </div>
+                            </div>
+
+                            <!-- 6. Export Presets Tab View -->
+                            <div class="template-tab-view" id="tplTabViewExport" style="display:none;">
+                                <div class="export-presets-grid" id="exportPresetsGrid">
+                                    <!-- Populated dynamically with export preset cards -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Audio Studio & SFX Library Pane -->
+                    <div class="editor-subpane" id="subpaneAudio" style="display:none;">
+                        <div class="pane-header">Audio Studio Library</div>
+                        <div class="pane-body">
+                            <!-- Category Filter Chips -->
+                            <div class="graphics-category-chips">
+                                <button class="chip-btn active" data-cat="all">All</button>
+                                <button class="chip-btn" data-cat="music">Music</button>
+                                <button class="chip-btn" data-cat="sfx">SFX</button>
+                                <button class="chip-btn" data-cat="voice">Voice</button>
+                                <button class="chip-btn" data-cat="imported">Imported</button>
+                            </div>
+
+                            <!-- Upload Custom Audio Button -->
+                            <button class="btn btn-secondary btn-sm" id="uploadAudioBtn" style="width:100%; margin: var(--space-2) 0; justify-content:center;">
+                                + Import Audio (MP3/WAV)
+                            </button>
+                            <input type="file" id="audioFileInput" accept=".mp3,.wav,.aac,.m4a,.ogg" style="display:none;">
+
+                            <!-- List of Audio Assets -->
+                            <div class="audio-asset-list" id="audioAssetList">
+                                <!-- Populated dynamically with play preview button -->
+                            </div>
+
+                            <!-- Multi-Track Audio Mixer -->
+                            <div class="settings-group-card" style="margin-top:var(--space-4);">
+                                <div class="settings-group-title">Audio Mixer & Levels</div>
+                                <div class="mixer-tracks-wrap" style="display:flex; flex-direction:column; gap:8px;">
+                                    <!-- Voice Track -->
+                                    <div class="mixer-track-item" style="background:var(--surface-3); padding:8px; border-radius:6px;">
+                                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; margin-bottom:4px;">
+                                            <span style="font-weight:700;">VOICE TRACK</span>
+                                            <div style="display:flex; gap:2px;">
+                                                <button class="btn btn-xs track-mute-btn" data-track="track_voice" style="padding:2px 4px; font-size:9px;">M</button>
+                                                <button class="btn btn-xs track-solo-btn" data-track="track_voice" style="padding:2px 4px; font-size:9px;">S</button>
+                                                <button class="btn btn-xs track-lock-btn" data-track="track_voice" style="padding:2px 4px; font-size:9px;">L</button>
+                                            </div>
+                                        </div>
+                                        <input type="range" class="track-vol-slider" data-track="track_voice" min="0" max="200" value="100" style="width:100%;">
+                                    </div>
+                                    <!-- Music Track -->
+                                    <div class="mixer-track-item" style="background:var(--surface-3); padding:8px; border-radius:6px;">
+                                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; margin-bottom:4px;">
+                                            <span style="font-weight:700;">MUSIC TRACK</span>
+                                            <div style="display:flex; gap:2px;">
+                                                <button class="btn btn-xs track-mute-btn" data-track="track_music" style="padding:2px 4px; font-size:9px;">M</button>
+                                                <button class="btn btn-xs track-solo-btn" data-track="track_music" style="padding:2px 4px; font-size:9px;">S</button>
+                                                <button class="btn btn-xs track-lock-btn" data-track="track_music" style="padding:2px 4px; font-size:9px;">L</button>
+                                            </div>
+                                        </div>
+                                        <input type="range" class="track-vol-slider" data-track="track_music" min="0" max="200" value="100" style="width:100%;">
+                                    </div>
+                                    <!-- SFX Track -->
+                                    <div class="mixer-track-item" style="background:var(--surface-3); padding:8px; border-radius:6px;">
+                                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; margin-bottom:4px;">
+                                            <span style="font-weight:700;">SFX TRACK</span>
+                                            <div style="display:flex; gap:2px;">
+                                                <button class="btn btn-xs track-mute-btn" data-track="track_sfx" style="padding:2px 4px; font-size:9px;">M</button>
+                                                <button class="btn btn-xs track-solo-btn" data-track="track_sfx" style="padding:2px 4px; font-size:9px;">S</button>
+                                                <button class="btn btn-xs track-lock-btn" data-track="track_sfx" style="padding:2px 4px; font-size:9px;">L</button>
+                                            </div>
+                                        </div>
+                                        <input type="range" class="track-vol-slider" data-track="track_sfx" min="0" max="200" value="100" style="width:100%;">
+                                    </div>
+                                    <!-- Master Track -->
+                                    <div class="mixer-track-item" style="background:var(--surface-3); padding:8px; border-radius:6px; border:1px solid var(--primary-soft);">
+                                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; margin-bottom:4px;">
+                                            <span style="font-weight:700; color:var(--primary);">MASTER OUT</span>
+                                            <div style="display:flex; gap:2px;">
+                                                <button class="btn btn-xs" id="masterMuteBtn" style="padding:2px 4px; font-size:9px;">M</button>
+                                            </div>
+                                        </div>
+                                        <input type="range" id="masterVolSlider" min="0" max="200" value="100" style="width:100%;">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Audio Diagnostics checklist -->
+                            <div class="settings-group-card" style="margin-top:var(--space-3);">
+                                <div class="settings-group-title">Audio Health Diagnostics</div>
+                                <div id="audioDiagnosticsList" style="display:flex; flex-direction:column; gap:4px; font-size:11px;">
+                                    <div style="color:var(--text-muted);">Running diagnostic audit...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Graphics & Shapes Library Pane -->
+                    <div class="editor-subpane" id="subpaneGraphics" style="display:none;">
+                        <div class="pane-header">Graphics & Shapes</div>
+                        <div class="pane-body">
+                            <div class="graphics-category-chips">
+                                <button class="chip-btn active" data-cat="all">All</button>
+                                <button class="chip-btn" data-cat="shapes">Shapes</button>
+                                <button class="chip-btn" data-cat="text">Text</button>
+                                <button class="chip-btn" data-cat="lower_thirds">Lower 3rds</button>
+                                <button class="chip-btn" data-cat="badges">Badges</button>
+                                <button class="chip-btn" data-cat="motion_presets">Motion</button>
+                                <button class="chip-btn" data-cat="templates">Templates</button>
+                            </div>
+
+                            <button class="btn btn-secondary btn-sm" id="uploadAssetBtn" style="width:100%; margin: var(--space-2) 0; justify-content:center;">
+                                + Import SVG / Image
+                            </button>
+                            <input type="file" id="assetFileInput" accept=".svg,.png,.jpg,.jpeg,.webp" style="display:none;">
+
+                            <div class="graphics-asset-grid" id="graphicsAssetGrid"></div>
+                        </div>
+                    </div>
+
+                    <!-- 4. Text & Titles Presets Pane -->
+                    <div class="editor-subpane" id="subpaneText" style="display:none;">
+                        <div class="pane-header">Text & Title Presets</div>
+                        <div class="pane-body">
+                            <div class="text-presets-list" id="textPresetsList"></div>
+                        </div>
+                    </div>
+
+                    <!-- 5. Layers Stack Pane -->
+                    <div class="editor-subpane" id="subpaneLayers" style="display:none;">
+                        <div class="pane-header" style="display:flex; justify-content:space-between; align-items:center;">
+                            <span>Layers Manager</span>
+                            <span id="layersCountLabel" style="font-size:10px; color:var(--text-muted);">0 layers</span>
+                        </div>
+                        <div class="pane-body">
+                            <div class="layers-stack-list" id="layersStackList">
+                                <div style="font-size:11px; color:var(--text-muted); text-align:center; padding:var(--space-4);">No layers added</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 6. AI Studio Assistant Pane -->
+                    <div class="editor-subpane" id="subpaneAI" style="display:none;">
+                        <div class="pane-header" style="display:flex; justify-content:space-between; align-items:center;">
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <span style="color:var(--primary);">✦</span>
+                                <span>AI Assistant</span>
+                            </div>
+                            <span class="ai-mode-tag">ASSIST MODE</span>
+                        </div>
+                        <div class="pane-body">
+                            <!-- Analyze Action Button & Progress -->
+                            <button class="btn btn-primary btn-sm" id="runAiAnalyzeBtn" style="width:100%; justify-content:center; gap:6px; margin-bottom:var(--space-2);">
+                                <span>✦ Analyze Video Project</span>
+                            </button>
+
+                            <div class="ai-analysis-progress-card" id="aiAnalysisStatusCard" style="display:none;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; margin-bottom:4px;">
+                                    <span id="aiAnalysisStatusText" style="color:var(--text-primary); font-weight:600;">Analyzing scenes...</span>
+                                    <span id="aiAnalysisPercentText" style="color:var(--text-muted); font-family:var(--font-mono);">0%</span>
+                                </div>
+                                <div class="progress-bar-wrap" style="height:4px; background:var(--surface-3); border-radius:2px; overflow:hidden;">
+                                    <div id="aiAnalysisProgressBar" style="width:0%; height:100%; background:var(--primary); transition:width 0.2s;"></div>
+                                </div>
+                            </div>
+
+                            <!-- Insight Category Navigation Chips -->
+                            <div class="graphics-category-chips ai-insight-chips" style="margin-top:var(--space-2);">
+                                <button class="chip-btn active" data-tab="highlights">Highlights</button>
+                                <button class="chip-btn" data-tab="silence">Silence</button>
+                                <button class="chip-btn" data-tab="scenes">Scenes</button>
+                                <button class="chip-btn" data-tab="suggestions">Advisor</button>
+                            </div>
+
+                            <!-- 1. Highlights List -->
+                            <div class="ai-tab-view" id="aiTabHighlights">
+                                <div class="ai-highlights-list" id="aiHighlightsList">
+                                    <div class="ai-empty-state">
+                                        <div style="font-size:24px; margin-bottom:4px;">✨</div>
+                                        <div style="font-weight:600; font-size:12px;">No Highlights Yet</div>
+                                        <div style="font-size:10px; color:var(--text-muted);">Click Analyze to find engaging moments</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2. Silence Detection List -->
+                            <div class="ai-tab-view" id="aiTabSilence" style="display:none;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-2);">
+                                    <span id="silenceTotalLabel" style="font-size:11px; color:var(--text-muted);">0 silences</span>
+                                    <button class="btn btn-secondary btn-sm" id="removeSilencesBtn" style="font-size:10px; padding:2px 8px; color:var(--error);" disabled>
+                                        Auto-Trim All
+                                    </button>
+                                </div>
+                                <div class="ai-silence-list" id="aiSilenceList">
+                                    <div class="ai-empty-state">
+                                        <div style="font-size:11px; color:var(--text-muted);">No silences analyzed</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 3. Scene Detection List -->
+                            <div class="ai-tab-view" id="aiTabScenes" style="display:none;">
+                                <div class="ai-scenes-list" id="aiScenesList">
+                                    <div class="ai-empty-state">
+                                        <div style="font-size:11px; color:var(--text-muted);">No scenes analyzed</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 4. Suggestions / Advisor List -->
+                            <div class="ai-tab-view" id="aiTabSuggestions" style="display:none;">
+                                <div class="ai-suggestions-list" id="aiSuggestionsList">
+                                    <div class="ai-empty-state">
+                                        <div style="font-size:11px; color:var(--text-muted);">No suggestions pending</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 7. Notes, Markers & Review Pane -->
+                    <div class="editor-subpane" id="subpaneNotes" style="display:none;">
+                        <div class="pane-header" style="display:flex; justify-content:space-between; align-items:center;">
+                            <span>Notes & Markers</span>
+                            <span class="ai-mode-tag" style="background:rgba(99,102,241,0.15); color:#6366F1; border-color:rgba(99,102,241,0.35);">COLLAB</span>
+                        </div>
+                        <div class="pane-body">
+                            <div class="graphics-category-chips notes-tab-chips" style="margin-bottom:8px;">
+                                <button class="chip-btn active" data-tab="markers">Markers</button>
+                                <button class="chip-btn" data-tab="notes">Notes</button>
+                                <button class="chip-btn" data-tab="review">Review</button>
+                            </div>
+
+                            <!-- 1. Markers View -->
+                            <div class="notes-tab-view" id="notesTabMarkers">
+                                <div style="display:flex; gap:6px; margin-bottom:8px;">
+                                    <select id="markerTypeSelect" class="input-select" style="font-size:11px; flex:1;">
+                                        <option value="general">📍 General</option>
+                                        <option value="review">⭐ Review</option>
+                                        <option value="cut">✂ Cut Point</option>
+                                        <option value="caption">💬 Subtitle</option>
+                                        <option value="audio">🎵 Audio</option>
+                                    </select>
+                                    <button class="btn btn-secondary btn-sm" id="addMarkerAtPlayheadBtn">+ Add Marker</button>
+                                </div>
+                                <div class="markers-list" id="markersList" style="display:flex; flex-direction:column; gap:4px; max-height:300px; overflow-y:auto;">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+
+                            <!-- 2. Timestamp Notes View -->
+                            <div class="notes-tab-view" id="notesTabNotes" style="display:none;">
+                                <div style="display:flex; gap:6px; margin-bottom:8px;">
+                                    <input type="text" id="newTimestampNoteInput" class="input-field" placeholder="Note at current playhead..." style="flex:1; font-size:11px;">
+                                    <button class="btn btn-secondary btn-sm" id="addTimestampNoteBtn">+ Add</button>
+                                </div>
+                                <div class="notes-list" id="timestampNotesList" style="display:flex; flex-direction:column; gap:4px; max-height:300px; overflow-y:auto;">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+
+                            <!-- 3. Review Comments View -->
+                            <div class="notes-tab-view" id="notesTabReview" style="display:none;">
+                                <div class="settings-group-card" style="padding:8px; margin-bottom:8px;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <span style="font-size:11px; font-weight:700;">Approval Status:</span>
+                                        <select id="reviewStatusSelect" class="input-select" style="font-size:11px; padding:2px 6px;">
+                                            <option value="In Review">In Review</option>
+                                            <option value="Changes Requested">Changes Requested</option>
+                                            <option value="Approved">Approved ✓</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div style="display:flex; gap:6px; margin-bottom:8px;">
+                                    <input type="text" id="newReviewCommentInput" class="input-field" placeholder="Review comment..." style="flex:1; font-size:11px;">
+                                    <button class="btn btn-primary btn-sm" id="addReviewCommentBtn">+ Post</button>
+                                </div>
+                                <div class="review-comments-list" id="reviewCommentsList" style="display:flex; flex-direction:column; gap:6px; max-height:280px; overflow-y:auto;">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 9. Content Intelligence & Shorts Factory Pane -->
+                    <div class="editor-subpane" id="subpaneIntelligence" style="display:none;">
+                        <div class="pane-header" style="display:flex; justify-content:space-between; align-items:center;">
+                            <span>Intelligence & Shorts</span>
+                            <button class="btn btn-secondary btn-sm" id="runIntelligenceBtn" style="font-size:10px; padding:2px 8px;">⚡ Re-Analyze</button>
+                        </div>
+                        <div class="pane-body">
+                            <!-- Category Chips -->
+                            <div class="graphics-category-chips intel-nav-chips" style="margin-bottom:8px;">
+                                <button class="chip-btn active" data-tab="candidates">Shorts</button>
+                                <button class="chip-btn" data-tab="topics">Topics</button>
+                                <button class="chip-btn" data-tab="factory">Factory</button>
+                                <button class="chip-btn" data-tab="search">Search</button>
+                            </div>
+
+                            <!-- Tab 1: Shorts Candidates -->
+                            <div class="intel-tab-view" id="intelTabCandidates">
+                                <div id="intelCandidatesList" style="display:flex; flex-direction:column; gap:6px; max-height:360px; overflow-y:auto;">
+                                    <div class="library-item empty">Loading candidate highlights...</div>
+                                </div>
+                            </div>
+
+                            <!-- Tab 2: Topic Segmentation -->
+                            <div class="intel-tab-view" id="intelTabTopics" style="display:none;">
+                                <div id="intelTopicsList" style="display:flex; flex-direction:column; gap:4px; max-height:360px; overflow-y:auto;">
+                                    <div class="library-item empty">No topic segments detected</div>
+                                </div>
+                            </div>
+
+                            <!-- Tab 3: Bulk Shorts Factory -->
+                            <div class="intel-tab-view" id="intelTabFactory" style="display:none;">
+                                <div class="settings-group-card" style="padding:8px; margin-bottom:8px;">
+                                    <div style="font-size:11px; font-weight:700; margin-bottom:4px;">Bulk Shorts Generation</div>
+                                    <div style="font-size:10px; color:var(--text-secondary); margin-bottom:6px;">Select highlight candidates to generate as independent, editable child projects.</div>
+                                    <div style="display:flex; gap:6px; margin-bottom:8px;">
+                                        <button class="btn btn-secondary btn-sm" id="bulkSelectAllCandidatesBtn" style="font-size:10px; flex:1;">Select All</button>
+                                        <button class="btn btn-secondary btn-sm" id="bulkDeselectAllCandidatesBtn" style="font-size:10px; flex:1;">Clear</button>
+                                    </div>
+                                    <div id="factoryCandidatesChecklist" style="display:flex; flex-direction:column; gap:4px; max-height:160px; overflow-y:auto; margin-bottom:8px;">
+                                    </div>
+                                    <button class="btn btn-primary btn-sm" id="bulkCreateShortsBtn" style="width:100%;">✦ Create Selected Shorts</button>
+                                </div>
+                            </div>
+
+                            <!-- Tab 4: Searchable Transcript Index -->
+                            <div class="intel-tab-view" id="intelTabSearch" style="display:none;">
+                                <div style="display:flex; gap:6px; margin-bottom:8px;">
+                                    <input type="text" id="transcriptSearchInput" class="input-field" placeholder="Search transcript (e.g. 'workflow', 'viral')..." style="flex:1; font-size:11px;">
+                                    <button class="btn btn-secondary btn-sm" id="transcriptSearchBtn">Search</button>
+                                </div>
+                                <div id="transcriptSearchResults" style="display:flex; flex-direction:column; gap:4px; max-height:300px; overflow-y:auto;">
+                                    <div class="library-item empty">Enter search term above</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center Preview Area -->
+                <div class="editor-center-pane">
+                    <div class="preview-canvas-wrapper" id="previewCanvasWrapper">
+                        <div class="aspect-ratio-selector-container">
+                            <select id="aspectRatioSelect" class="input-select btn-sm">
+                                <option value="9:16" selected>9:16 Shorts</option>
+                                <option value="16:9">16:9 Landscape</option>
+                                <option value="1:1">1:1 Square</option>
+                            </select>
+                            <button id="toggleSafeGuide" class="btn btn-secondary btn-sm" style="display:flex; align-items:center; gap:4px;">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+                                <span>Safe Guides</span>
+                            </button>
+                        </div>
+
+                        <!-- Interactive Canvas -->
+                        <div class="preview-canvas aspect-9-16" id="previewCanvas">
+                            <div class="video-transform-wrapper" id="videoTransformWrapper">
+                                <video id="editorVideoPlayer" src="" preload="auto" playsinline></video>
+                            </div>
+
+                            <div class="graphics-canvas-overlay" id="graphicsCanvasOverlay"></div>
+
+                            <div class="canvas-safe-guides" id="canvasSafeGuides">
+                                <div class="guide-vertical-left"></div>
+                                <div class="guide-vertical-right"></div>
+                                <div class="guide-center-dot"></div>
+                                <div class="safe-zone-box">Safe Title Area</div>
+                            </div>
+                        </div>
+
+                        <!-- Player Transport Controls -->
+                        <div class="player-controls-bar">
+                            <button class="control-btn" id="playBtn" data-tooltip="Play/Pause (Space)">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="play-icon"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="pause-icon" style="display:none;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                            </button>
+                            <div class="time-readout">
+                                <span id="currentTimeDisplay">00:00.00</span>
+                                <span class="readout-divider">/</span>
+                                <span id="durationDisplay">00:00.00</span>
+                            </div>
+                            <div class="controls-divider"></div>
+                            <div class="volume-controls">
+                                <button class="control-btn" id="muteBtn" data-tooltip="Mute Master">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="vol-icon"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mute-icon" style="display:none;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+                                </button>
+                                <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="80">
+                            </div>
+
+                            <!-- Audio Peak Meter -->
+                            <div class="audio-peak-meter" id="audioPeakMeter" title="Master Audio Meter">
+                                <div class="meter-bar" id="meterBarLeft"></div>
+                                <div class="meter-bar" id="meterBarRight"></div>
+                            </div>
+
+                            <div class="controls-divider"></div>
+                            <select id="playbackSpeedSelect" class="input-select btn-sm" style="width:70px;">
+                                <option value="0.5">0.5x</option>
+                                <option value="1.0" selected>1.0x</option>
+                                <option value="1.5">1.5x</option>
+                                <option value="2.0">2.0x</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Inspector Panel -->
+                <div class="editor-right-pane">
+                    <div class="pane-header">Inspector</div>
+                    <div class="pane-body" id="inspectorBody">
+                        <div class="inspector-empty-state" id="inspectorEmptyState">
+                            Select a video clip, graphic layer, or audio clip to configure properties.
+                        </div>
+                        
+                        <!-- 1. Video Clip Inspector Group -->
+                        <div class="inspector-form-group" id="videoInspectorGroup" style="display:none;">
+                            <div class="settings-group-card">
+                                <div class="settings-group-title">Video Transform</div>
+                                
+                                <div class="form-row">
+                                    <label>Position X</label>
+                                    <div class="input-with-slider">
+                                        <input type="range" id="inspectXRange" min="-500" max="500" value="0">
+                                        <input type="number" id="inspectXNum" value="0" class="input-field-sm">
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <label>Position Y</label>
+                                    <div class="input-with-slider">
+                                        <input type="range" id="inspectYRange" min="-500" max="500" value="0">
+                                        <input type="number" id="inspectYNum" value="0" class="input-field-sm">
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <label>Scale (%)</label>
+                                    <div class="input-with-slider">
+                                        <input type="range" id="inspectScaleRange" min="10" max="400" value="100">
+                                        <input type="number" id="inspectScaleNum" value="100" class="input-field-sm">
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <label>Rotation (°)</label>
+                                    <div class="input-with-slider">
+                                        <input type="range" id="inspectRotRange" min="-180" max="180" value="0">
+                                        <input type="number" id="inspectRotNum" value="0" class="input-field-sm">
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <label>Opacity (%)</label>
+                                    <div class="input-with-slider">
+                                        <input type="range" id="inspectOpacityRange" min="0" max="100" value="100">
+                                        <input type="number" id="inspectOpacityNum" value="100" class="input-field-sm">
+                                    </div>
+                                </div>
+
+                                <button id="resetTransformBtn" class="btn btn-secondary btn-sm" style="margin-top:var(--space-2);">Reset Transform</button>
+                            </div>
+                        </div>
+
+                        <!-- 2. Audio Clip Inspector Group -->
+                        <div class="inspector-form-group" id="audioClipInspectorGroup" style="display:none;">
+                            <div class="settings-group-card">
+                                <div class="settings-group-title">Audio Clip Settings</div>
+                                <div class="form-row">
+                                    <label>Clip Name</label>
+                                    <input type="text" id="audioClipNameInput" class="input-field-sm" style="width:100%; text-align:left;">
+                                </div>
+                                <div class="form-row" style="margin-top:6px;">
+                                    <label>Track Assignment</label>
+                                    <select id="audioClipTrackSelect" class="input-select" style="width:100%;">
+                                        <option value="track_video_audio">A1 - Video Audio</option>
+                                        <option value="track_music">A2 - Music</option>
+                                        <option value="track_voice">A3 - Voiceover</option>
+                                        <option value="track_sfx">A4 - SFX</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="settings-group-card" style="margin-top:var(--space-3);">
+                                <div class="settings-group-title">Levels & Panning</div>
+                                <div class="form-row">
+                                    <label>Volume (<span id="audioClipVolDisplay">100</span>%)</label>
+                                    <input type="range" id="audioClipVolRange" min="0" max="200" value="100">
+                                </div>
+                                <div class="form-row" style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+                                    <label>Mute Clip</label>
+                                    <input type="checkbox" id="audioClipMuteCheck">
+                                </div>
+                                <div class="form-row" style="margin-top:6px;">
+                                    <label>Stereo Pan (<span id="audioClipPanDisplay">C</span>)</label>
+                                    <input type="range" id="audioClipPanRange" min="-100" max="100" value="0">
+                                </div>
+                            </div>
+
+                            <div class="settings-group-card" style="margin-top:var(--space-3);">
+                                <div class="settings-group-title">Fades & Automation</div>
+                                <div class="form-row">
+                                    <label>Fade In (<span id="audioClipFadeInDisplay">0.0</span>s)</label>
+                                    <input type="range" id="audioClipFadeInRange" min="0" max="50" value="0">
+                                </div>
+                                <div class="form-row" style="margin-top:6px;">
+                                    <label>Fade Out (<span id="audioClipFadeOutDisplay">0.0</span>s)</label>
+                                    <input type="range" id="audioClipFadeOutRange" min="0" max="50" value="0">
+                                </div>
+                            </div>
+
+                            <!-- Voice Clean Effects -->
+                            <div class="settings-group-card" style="margin-top:var(--space-3);">
+                                <div class="settings-group-title">Voice & Clean Effects</div>
+                                <div class="form-row" style="display:flex; justify-content:space-between; align-items:center;">
+                                    <label>Noise Reduction</label>
+                                    <input type="checkbox" id="audioClipNoiseReductionCheck">
+                                </div>
+                                <div class="form-row" style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+                                    <label>Voice Enhancement</label>
+                                    <input type="checkbox" id="audioClipVoiceEnhanceCheck">
+                                </div>
+                                <div class="form-row" style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+                                    <label>Loudness Normalization</label>
+                                    <input type="checkbox" id="audioClipNormalizeCheck">
+                                </div>
+                            </div>
+
+                            <button id="deleteAudioClipBtn" class="btn btn-secondary btn-sm" style="margin-top:var(--space-3); color:var(--error); width:100%; justify-content:center;">Delete Audio Clip</button>
+                        </div>
+
+                        <!-- 3. Graphic Layer Inspector Group -->
+                        <div class="inspector-form-group" id="graphicInspectorGroup" style="display:none;">
+                            <div class="settings-group-card">
+                                <div class="settings-group-title" style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span>Layer Details</span>
+                                    <div style="display:flex; gap:4px;">
+                                        <button class="btn btn-icon btn-sm" id="layerBringForwardBtn" title="Bring Forward">▲</button>
+                                        <button class="btn btn-icon btn-sm" id="layerSendBackwardBtn" title="Send Backward">▼</button>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <label>Layer Name</label>
+                                    <input type="text" id="graphicNameInput" class="input-field-sm" style="width:100%; text-align:left;">
+                                </div>
+                            </div>
+
+                            <div class="settings-group-card" style="margin-top:var(--space-3);">
+                                <div class="settings-group-title">Transform</div>
+                                <div class="form-row">
+                                    <label>Position X / Y</label>
+                                    <div style="display:flex; gap:var(--space-2);">
+                                        <input type="number" id="gPosXNum" class="input-field-sm" placeholder="X" style="flex:1;">
+                                        <input type="number" id="gPosYNum" class="input-field-sm" placeholder="Y" style="flex:1;">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <label>Width / Height</label>
+                                    <div style="display:flex; gap:var(--space-2);">
+                                        <input type="number" id="gWidthNum" class="input-field-sm" placeholder="W" style="flex:1;">
+                                        <input type="number" id="gHeightNum" class="input-field-sm" placeholder="H" style="flex:1;">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <label>Scale (<span id="gScaleDisplay">100</span>%)</label>
+                                    <input type="range" id="gScaleRange" min="10" max="300" value="100">
+                                </div>
+                                <div class="form-row">
+                                    <label>Rotation (<span id="gRotDisplay">0</span>°)</label>
+                                    <input type="range" id="gRotRange" min="-180" max="180" value="0">
+                                </div>
+                                <div class="form-row">
+                                    <label>Opacity (<span id="gOpacityDisplay">100</span>%)</label>
+                                    <input type="range" id="gOpacityRange" min="0" max="100" value="100">
+                                </div>
+                            </div>
+
+                            <div class="settings-group-card" id="graphicAppearanceCard" style="margin-top:var(--space-3);">
+                                <div class="settings-group-title">Appearance</div>
+                                <div class="form-row" style="display:flex; justify-content:space-between; align-items:center;">
+                                    <label>Fill Color</label>
+                                    <input type="color" id="gFillColorPicker" value="#8B5CF6" class="color-picker-input">
+                                </div>
+                                <div class="form-row" style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+                                    <label>Stroke Color</label>
+                                    <input type="color" id="gStrokeColorPicker" value="#000000" class="color-picker-input">
+                                </div>
+                                <div class="form-row" style="margin-top:6px;">
+                                    <label>Stroke Width (<span id="gStrokeWidthDisplay">2</span>px)</label>
+                                    <input type="range" id="gStrokeWidthRange" min="0" max="12" value="2">
+                                </div>
+                                <div class="form-row" id="gRadiusRow" style="margin-top:6px;">
+                                    <label>Corner Radius (<span id="gRadiusDisplay">8</span>px)</label>
+                                    <input type="range" id="gRadiusRange" min="0" max="40" value="8">
+                                </div>
+                            </div>
+
+                            <!-- Alignment Bar -->
+                            <div class="settings-group-card" style="margin-top:var(--space-3);">
+                                <div class="settings-group-title">Alignment</div>
+                                <div class="alignment-buttons-bar" style="display:flex; gap:4px;">
+                                    <button class="btn btn-secondary btn-sm align-btn" data-align="left" title="Align Left" style="flex:1; padding:4px;">⇱</button>
+                                    <button class="btn btn-secondary btn-sm align-btn" data-align="center_x" title="Center Horizontal" style="flex:1; padding:4px;">↔</button>
+                                    <button class="btn btn-secondary btn-sm align-btn" data-align="right" title="Align Right" style="flex:1; padding:4px;">⇲</button>
+                                    <button class="btn btn-secondary btn-sm align-btn" data-align="top" title="Align Top" style="flex:1; padding:4px;">⤓</button>
+                                    <button class="btn btn-secondary btn-sm align-btn" data-align="center_y" title="Center Vertical" style="flex:1; padding:4px;">↕</button>
+                                    <button class="btn btn-secondary btn-sm align-btn" data-align="bottom" title="Align Bottom" style="flex:1; padding:4px;">⤒</button>
+                                </div>
+                            </div>
+
+                            <div style="display:flex; gap:6px; margin-top:var(--space-3);">
+                                <button class="btn btn-secondary btn-sm" id="saveGraphicTemplateBtn" style="flex:1; font-size:10px;">💾 Save Template</button>
+                                <button class="btn btn-secondary btn-sm" id="ungroupGraphicBtn" style="display:none; flex:1; font-size:10px;">⧈ Ungroup</button>
+                            </div>
+
+                            <div class="settings-group-card" id="graphicTypographyCard" style="margin-top:var(--space-3); display:none;">
+                                <div class="settings-group-title">Typography</div>
+                                <div class="form-row">
+                                    <label>Text Content</label>
+                                    <input type="text" id="gTextInput" class="input-field-sm" style="width:100%; text-align:left;">
+                                </div>
+                                <div class="form-row">
+                                    <label>Font Family</label>
+                                    <select id="gFontFamilySelect" class="input-select" style="width:100%;">
+                                        <option value="Inter">Inter</option>
+                                        <option value="Anton">Anton</option>
+                                        <option value="Bebas Neue">Bebas Neue</option>
+                                        <option value="DM Sans">DM Sans</option>
+                                        <option value="Manrope">Manrope</option>
+                                        <option value="Poppins">Poppins</option>
+                                        <option value="Roboto">Roboto</option>
+                                        <option value="JetBrains Mono">JetBrains Mono</option>
+                                    </select>
+                                </div>
+                                <div class="form-row">
+                                    <label>Font Size (<span id="gFontSizeDisplay">36</span>px)</label>
+                                    <input type="range" id="gFontSizeRange" min="14" max="90" value="36">
+                                </div>
+                                <div class="form-row" style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+                                    <label>Text Color</label>
+                                    <input type="color" id="gTextColorPicker" value="#FFFFFF" class="color-picker-input">
+                                </div>
+                            </div>
+
+                            <div class="settings-group-card" style="margin-top:var(--space-3);">
+                                <div class="settings-group-title">Motion & Animation</div>
+                                <div class="form-row">
+                                    <label>Entrance Animation</label>
+                                    <select id="gEntranceAnimSelect" class="input-select" style="width:100%;">
+                                        <option value="none">None</option>
+                                        <option value="pop" selected>Pop In</option>
+                                        <option value="fade_in">Fade In</option>
+                                        <option value="slide_up">Slide Up</option>
+                                        <option value="slide_down">Slide Down</option>
+                                        <option value="scale_in">Scale In</option>
+                                    </select>
+                                </div>
+                                <div class="form-row" style="margin-top:6px;">
+                                    <label>Exit Animation</label>
+                                    <select id="gExitAnimSelect" class="input-select" style="width:100%;">
+                                        <option value="none" selected>None</option>
+                                        <option value="fade_out">Fade Out</option>
+                                        <option value="slide_out">Slide Down Out</option>
+                                        <option value="scale_out">Scale Out</option>
+                                    </select>
+                                </div>
+                                <button id="deleteGraphicBtn" class="btn btn-secondary btn-sm" style="margin-top:var(--space-3); color:var(--error); width:100%; justify-content:center;">Delete Graphic Layer</button>
+                            </div>
+                        </div>
+
+                        <!-- 4. AI Studio Assistant Inspector Group -->
+                        <div class="inspector-form-group" id="aiInspectorGroup" style="display:none;">
+                            <div class="settings-group-card">
+                                <div class="settings-group-title">AI Automation Mode</div>
+                                <div class="form-row">
+                                    <label>Operating Mode</label>
+                                    <select id="aiOperatingModeSelect" class="input-select" style="width:100%;">
+                                        <option value="assist" selected>Assist (Suggest Only)</option>
+                                        <option value="smart">Smart (Review & Apply)</option>
+                                        <option value="manual">Manual (Direct Edits)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="settings-group-card" style="margin-top:var(--space-3);">
+                                <div class="settings-group-title">Smart Reframe (16:9 → 9:16)</div>
+                                <div class="form-row">
+                                    <label>Framing Strategy</label>
+                                    <select id="aiReframeModeSelect" class="input-select" style="width:100%;">
+                                        <option value="smart" selected>Smart Face / Subject Track</option>
+                                        <option value="center">Center Crop (Fixed)</option>
+                                        <option value="manual">Manual Framing</option>
+                                    </select>
+                                </div>
+                                <button id="applySmartReframeBtn" class="btn btn-secondary btn-sm" style="margin-top:var(--space-2); width:100%; justify-content:center;">
+                                    ✦ Apply 9:16 Reframe
+                                </button>
+                            </div>
+
+                            <div class="settings-group-card" style="margin-top:var(--space-3);">
+                                <div class="settings-group-title">Silence Sensitivity</div>
+                                <div class="form-row">
+                                    <label>Pause Length Threshold</label>
+                                    <select id="aiSilenceSensSelect" class="input-select" style="width:100%;">
+                                        <option value="0.3">Short (0.3s) — Fast Pace</option>
+                                        <option value="0.5" selected>Medium (0.5s) — Natural</option>
+                                        <option value="1.0">Long (1.0s) — Conservative</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Multi-Track Timeline Panel at bottom -->
+            <footer class="editor-bottom-timeline">
+                <div class="timeline-toolbar">
+                    <div class="toolbar-left">
+                        <button class="btn btn-icon btn-sm active" id="snapToggle" data-tooltip="Snap Clips (S)">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H5zm12 6H7v2h10V9zm0 4H7v2h10v-2z"/></svg>
+                        </button>
+                        <div class="timeline-timer-readout" id="timelineTimeReadout">00:00.00</div>
+                    </div>
+
+                    <div class="toolbar-right">
+                        <div class="zoom-controls">
+                            <span class="zoom-label">Zoom</span>
+                            <input type="range" id="timelineZoom" class="zoom-slider" min="1" max="100" value="30">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scrollable Track Workspace -->
+                <div class="timeline-tracks-area" id="timelineTracksArea">
+                    <div class="time-ruler-track" id="timeRulerTrack">
+                        <canvas id="rulerCanvas" style="width:100%; height:100%; display:block;"></canvas>
+                    </div>
+
+                    <div class="tracks-container">
+                        <!-- Playhead indicator -->
+                        <div class="timeline-playhead-line" id="timelinePlayhead">
+                            <div class="playhead-handle"></div>
+                        </div>
+
+                        <!-- Graphics Track G1 -->
+                        <div class="track-row" data-track-type="graphics" id="graphicsTrackRow">
+                            <div class="track-header">
+                                <span class="track-name">G1</span>
+                                <span class="track-desc">Graphics</span>
+                            </div>
+                            <div class="track-lane" id="graphicsTrackLane"></div>
+                        </div>
+
+                        <!-- Video Track V1 -->
+                        <div class="track-row" data-track-type="video" id="videoTrackRow">
+                            <div class="track-header">
+                                <span class="track-name">V1</span>
+                                <span class="track-desc">Video</span>
+                            </div>
+                            <div class="track-lane" id="videoTrackLane"></div>
+                        </div>
+
+                        <!-- Audio Track A1: Video Audio -->
+                        <div class="track-row audio-track-row" data-track-id="track_video_audio" id="trackRowVideoAudio">
+                            <div class="track-header">
+                                <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                                    <span class="track-name">A1</span>
+                                    <div class="track-controls-mini">
+                                        <button class="track-mini-btn mute-btn" title="Mute Track">M</button>
+                                        <button class="track-mini-btn solo-btn" title="Solo Track">S</button>
+                                    </div>
+                                </div>
+                                <span class="track-desc">Video Audio</span>
+                            </div>
+                            <div class="track-lane" id="laneVideoAudio"></div>
+                        </div>
+
+                        <!-- Audio Track A2: Music -->
+                        <div class="track-row audio-track-row" data-track-id="track_music" id="trackRowMusic">
+                            <div class="track-header">
+                                <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                                    <span class="track-name" style="color:#38BDF8;">A2</span>
+                                    <div class="track-controls-mini">
+                                        <button class="track-mini-btn mute-btn" title="Mute Track">M</button>
+                                        <button class="track-mini-btn solo-btn" title="Solo Track">S</button>
+                                    </div>
+                                </div>
+                                <span class="track-desc">Music</span>
+                            </div>
+                            <div class="track-lane" id="laneMusic"></div>
+                        </div>
+
+                        <!-- Audio Track A3: Voiceover -->
+                        <div class="track-row audio-track-row" data-track-id="track_voice" id="trackRowVoice">
+                            <div class="track-header">
+                                <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                                    <span class="track-name" style="color:#FBBF24;">A3</span>
+                                    <div class="track-controls-mini">
+                                        <button class="track-mini-btn mute-btn" title="Mute Track">M</button>
+                                        <button class="track-mini-btn solo-btn" title="Solo Track">S</button>
+                                    </div>
+                                </div>
+                                <span class="track-desc">Voice / Voiceover</span>
+                            </div>
+                            <div class="track-lane" id="laneVoice"></div>
+                        </div>
+
+                        <!-- Audio Track A4: SFX -->
+                        <div class="track-row audio-track-row" data-track-id="track_sfx" id="trackRowSfx">
+                            <div class="track-header">
+                                <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                                    <span class="track-name" style="color:#A855F7;">A4</span>
+                                    <div class="track-controls-mini">
+                                        <button class="track-mini-btn mute-btn" title="Mute Track">M</button>
+                                        <button class="track-mini-btn solo-btn" title="Solo Track">S</button>
+                                    </div>
+                                </div>
+                                <span class="track-desc">SFX Effects</span>
+                            </div>
+                            <div class="track-lane" id="laneSfx"></div>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Export Center Modal -->
+    <div class="modal-overlay" id="exportModal" hidden>
+        <div class="modal" style="max-width: 520px;">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <h3>Export Center</h3>
+                    <span class="ai-mode-tag" style="background:rgba(16,185,129,0.15); color:#10B981; border-color:rgba(16,185,129,0.35);">PRODUCTION</span>
+                </div>
+                <button class="modal-close-btn" id="exportModalClose" type="button">✕</button>
+            </div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:var(--space-3); padding-top:var(--space-2);">
+                <!-- Settings Grid -->
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:var(--space-2);">
+                    <div class="form-row">
+                        <label>Format & Preset</label>
+                        <select id="exportPresetSelect" class="input-select" style="width:100%;">
+                            <option value="exp_shorts_1080p" selected>9:16 Vertical Shorts (1080p)</option>
+                            <option value="exp_youtube_1080p">16:9 Widescreen (1080p)</option>
+                            <option value="exp_square_1080p">1:1 Square Feed (1080p)</option>
+                            <option value="exp_draft_720p">Fast Draft Preview (720p)</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <label>Quality Profile</label>
+                        <select id="exportQualitySelect" class="input-select" style="width:100%;">
+                            <option value="standard" selected>Standard (Balanced CRF 23)</option>
+                            <option value="high">High Bitrate (CRF 18)</option>
+                            <option value="draft">Fast Draft (CRF 28)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <label>Output Filename</label>
+                    <input type="text" id="exportFilenameInput" class="input-field" placeholder="project_export_v1.mp4" style="width:100%;">
+                </div>
+
+                <!-- Pre-Export Ready Check Card -->
+                <div class="settings-group-card" style="background:var(--surface-2); padding:var(--space-3); border-radius:var(--radius-sm);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span style="font-size:11px; font-weight:700; color:var(--text-primary);">Pre-Export Ready Check</span>
+                        <span id="readyCheckBadge" class="ai-score-badge" style="font-size:9px;">Checking...</span>
+                    </div>
+                    <div id="readyCheckList" style="display:flex; flex-direction:column; gap:4px; font-size:11px; color:var(--text-secondary);">
+                        <!-- Populated dynamically with validation items -->
+                    </div>
+                </div>
+
+                <!-- Progress Panel (when rendering directly) -->
+                <div class="export-status-panel" id="exportStatusPanel" style="display:none; background:var(--surface-2); padding:var(--space-3); border-radius:var(--radius-sm); border:1px solid var(--border);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:600;">
+                        <span id="exportStatusText">Rendering...</span>
+                        <span id="exportPercentText">0%</span>
+                    </div>
+                    <div class="progress-bar-container" style="height:6px; background:var(--border-strong); border-radius:var(--radius-full); margin-top:8px; overflow:hidden;">
+                        <div id="exportProgressBar" style="width:0%; height:100%; background:var(--primary); transition: width 0.2s;"></div>
+                    </div>
+                </div>
+
+                <div class="modal-actions" style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-2);">
+                    <button class="btn btn-secondary btn-sm" id="exportCancelBtn">Cancel</button>
+                    <button class="btn btn-secondary btn-sm" id="addToQueueBtn" style="color:var(--primary); font-weight:700;">✦ Add to Queue</button>
+                    <button class="btn btn-primary btn-sm" id="exportStartBtn">Export Now</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dedicated Render Queue Drawer / Modal -->
+    <div class="modal-overlay" id="renderQueueModal" hidden>
+        <div class="modal" style="max-width: 580px;">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <h3>Render Queue</h3>
+                    <span id="queueActiveCountTag" class="ai-score-badge" style="font-size:9px;">0 Active</span>
+                </div>
+                <div style="display:flex; gap:6px;">
+                    <button class="btn btn-secondary btn-sm" id="clearQueueHistoryBtn" style="font-size:10px; padding:4px 8px;">Clear Finished</button>
+                    <button class="modal-close-btn" id="renderQueueModalClose" type="button">✕</button>
+                </div>
+            </div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:var(--space-3); padding-top:var(--space-2);">
+                <div class="render-queue-list" id="renderQueueList" style="display:flex; flex-direction:column; gap:var(--space-2); max-height:360px; overflow-y:auto;">
+                    <!-- Populated dynamically with render job cards -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Media Manager & Health Modal -->
+    <div class="modal-overlay" id="mediaManagerModal" hidden>
+        <div class="modal" style="max-width: 540px;">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <h3>Media Manager & Project Health</h3>
+                    <span class="ai-mode-tag" style="background:rgba(59,130,246,0.15); color:#3B82F6; border-color:rgba(59,130,246,0.35);">ASSETS</span>
+                </div>
+                <button class="modal-close-btn" id="mediaManagerModalClose" type="button">✕</button>
+            </div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:var(--space-3); padding-top:var(--space-2);">
+                <!-- Media Health List -->
+                <div class="settings-group-card">
+                    <div class="settings-group-title">Project Media Assets</div>
+                    <div id="mediaManagerAssetList" style="display:flex; flex-direction:column; gap:4px; margin-top:6px;">
+                        <!-- Populated dynamically with assets and relink options -->
+                    </div>
+                </div>
+
+                <!-- Cache & Backup Actions -->
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:var(--space-2);">
+                    <div class="settings-group-card" style="padding:var(--space-2);">
+                        <div style="font-size:11px; font-weight:700;">Temporary Cache</div>
+                        <div id="cacheSizeText" style="font-size:10px; color:var(--text-muted); margin:4px 0;">0 MB temp files</div>
+                        <button class="btn btn-secondary btn-sm" id="clearCacheBtn" style="width:100%; justify-content:center; font-size:10px;">Clear Temp Cache</button>
+                    </div>
+
+                    <div class="settings-group-card" style="padding:var(--space-2);">
+                        <div style="font-size:11px; font-weight:700;">Project Packaging</div>
+                        <div style="font-size:10px; color:var(--text-muted); margin:4px 0;">Bundle project & media into ZIP</div>
+                        <button class="btn btn-secondary btn-sm" id="packageProjectBtn" style="width:100%; justify-content:center; font-size:10px;">Package to ZIP</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save as Template Modal -->
+    <div class="modal-overlay" id="saveTemplateModal" hidden>
+        <div class="modal" style="max-width: 420px;">
+            <div class="modal-header">
+                <h3>Save Project as Reusable Template</h3>
+                <button class="modal-close-btn" id="saveTemplateModalClose" type="button">✕</button>
+            </div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:var(--space-3); padding-top:var(--space-2);">
+                <div class="form-row">
+                    <label>Template Name</label>
+                    <input type="text" id="tplModalNameInput" class="input-field" placeholder="e.g. My Viral Short Style" style="width:100%;">
+                </div>
+                <div class="form-row" style="margin-top:6px;">
+                    <label>Category</label>
+                    <select id="tplModalCategorySelect" class="input-select" style="width:100%;">
+                        <option value="Short Form" selected>Short Form (9:16)</option>
+                        <option value="Podcast">Podcast & Audiogram</option>
+                        <option value="Talking Head">Talking Head</option>
+                        <option value="Interview">Interview</option>
+                        <option value="Educational">Educational Explainer</option>
+                        <option value="Minimal">Minimalist</option>
+                        <option value="Custom">Custom</option>
+                    </select>
+                </div>
+                <div class="form-row" style="margin-top:6px;">
+                    <label>Description</label>
+                    <textarea id="tplModalDescInput" class="input-field" rows="2" placeholder="Brief visual style description" style="width:100%;"></textarea>
+                </div>
+
+                <div class="modal-actions" style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:var(--space-3);">
+                    <button class="btn btn-secondary btn-sm" id="saveTemplateCancelBtn">Cancel</button>
+                    <button class="btn btn-primary btn-sm" id="saveTemplateConfirmBtn">✦ Save Template</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Command Palette Modal (Ctrl+K) -->
+    <div class="modal-overlay" id="commandPaletteModal" hidden>
+        <div class="modal" style="max-width: 540px; padding: 0; overflow: hidden;">
+            <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="commandPaletteInput" placeholder="Type a command or search (e.g. export, caption, marker, audio)..." style="flex:1; background:transparent; border:none; color:var(--text-primary); font-size:14px; outline:none;">
+                <span style="font-size:10px; color:var(--text-muted); background:var(--surface-3); padding:2px 6px; border-radius:4px;">ESC</span>
+            </div>
+            <div id="commandPaletteResults" style="max-height: 320px; overflow-y: auto; padding: 8px;">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Version History Modal -->
+    <div class="modal-overlay" id="versionHistoryModal" hidden>
+        <div class="modal" style="max-width: 520px;">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <h3>Project Version History</h3>
+                    <span class="ai-mode-tag" style="background:rgba(99,102,241,0.15); color:#6366F1; border-color:rgba(99,102,241,0.35);">SNAPSHOTS</span>
+                </div>
+                <div style="display:flex; gap:6px;">
+                    <button class="btn btn-primary btn-sm" id="createNewVersionBtn" style="font-size:11px;">+ Save Version</button>
+                    <button class="modal-close-btn" id="versionHistoryModalClose" type="button">✕</button>
+                </div>
+            </div>
+            <div class="modal-body" style="padding-top:var(--space-2);">
+                <div id="versionHistoryList" style="display:flex; flex-direction:column; gap:var(--space-2); max-height:340px; overflow-y:auto;">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Version Modal -->
+    <div class="modal-overlay" id="saveVersionModal" hidden>
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3>Save New Project Version</h3>
+                <button class="modal-close-btn" id="saveVersionModalClose" type="button">✕</button>
+            </div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:var(--space-3); padding-top:var(--space-2);">
+                <div class="form-row">
+                    <label>Version Name</label>
+                    <input type="text" id="saveVersionNameInput" class="input-field" placeholder="e.g. Client Cut 2, Audio Mixed" style="width:100%;">
+                </div>
+                <div class="form-row">
+                    <label>Note / Changelog</label>
+                    <textarea id="saveVersionNoteInput" class="input-field" rows="2" placeholder="Summary of edits in this snapshot..." style="width:100%;"></textarea>
+                </div>
+                <div class="modal-actions" style="display:flex; gap:var(--space-2); justify-content:flex-end;">
+                    <button class="btn btn-secondary btn-sm" id="saveVersionCancelBtn">Cancel</button>
+                    <button class="btn btn-primary btn-sm" id="saveVersionConfirmBtn">Save Snapshot</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Diagnostics Modal -->
+    <div class="modal-overlay" id="diagnosticsModal" hidden>
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <h3>System Diagnostics & Environment</h3>
+                </div>
+                <button class="modal-close-btn" id="diagnosticsModalClose" type="button">✕</button>
+            </div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:var(--space-2); padding-top:var(--space-2);">
+                <div id="diagnosticsContent" class="settings-group-card" style="font-family:monospace; font-size:11px; line-height:1.6; max-height:280px; overflow-y:auto;">
+                    Loading system stats...
+                </div>
+                <div class="modal-actions" style="display:flex; gap:var(--space-2); justify-content:flex-end; margin-top:6px;">
+                    <button class="btn btn-secondary btn-sm" id="copyDiagnosticsBtn">Copy Diagnostics</button>
+                    <button class="btn btn-primary btn-sm" id="closeDiagnosticsBtn">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Copilot Panel / Modal -->
+    <div class="modal-overlay" id="aiCopilotModal" hidden>
+        <div class="modal" style="max-width: 560px;">
+            <div class="modal-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="color:var(--primary); font-size:16px;">✦</span>
+                    <h3>AI Copilot & Intelligent Editing</h3>
+                    <span class="ai-mode-tag" style="background:rgba(139,92,246,0.15); color:#A78BFA; border-color:rgba(139,92,246,0.35);">ASSISTANT</span>
+                </div>
+                <button class="modal-close-btn" id="aiCopilotModalClose" type="button">✕</button>
+            </div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:var(--space-3); padding-top:var(--space-2);">
+                <!-- Context Header -->
+                <div class="settings-group-card" style="padding:8px 12px; background:var(--surface-2);">
+                    <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; font-weight:700; letter-spacing:0.5px;">Active Editing Context</div>
+                    <div id="copilotContextInfo" style="font-size:12px; font-weight:600; color:var(--text-primary); margin-top:2px;">
+                        Loading project context...
+                    </div>
+                </div>
+
+                <!-- Quick Action Chips -->
+                <div>
+                    <div style="font-size:11px; font-weight:700; color:var(--text-secondary); margin-bottom:6px;">Quick Intelligent Actions:</div>
+                    <div class="copilot-action-chips" style="display:flex; flex-wrap:wrap; gap:6px;">
+                        <button class="chip-btn copilot-chip" data-prompt="Remove silence and dead air">✂ Remove Silence</button>
+                        <button class="chip-btn copilot-chip" data-prompt="Find viral highlights and key moments">⚡ Find Highlights</button>
+                        <button class="chip-btn copilot-chip" data-prompt="Shorten captions for mobile readability">💬 Shorten Captions</button>
+                        <button class="chip-btn copilot-chip" data-prompt="Balance music volume and enable ducking">🎵 Balance Audio</button>
+                        <button class="chip-btn copilot-chip" data-prompt="Reframe video to 9:16 vertical shorts">📱 9:16 Reframe</button>
+                        <button class="chip-btn copilot-chip" data-prompt="Generate video chapters and content outline">🗺 Chapters</button>
+                    </div>
+                </div>
+
+                <!-- Natural Language Input -->
+                <div style="display:flex; gap:6px; margin-top:4px;">
+                    <input type="text" id="copilotInput" class="input-field" placeholder="Ask AI Copilot to edit (e.g. 'Make this clip shorter', 'Remove silence')..." style="flex:1; font-size:12px;">
+                    <button class="btn btn-primary btn-sm" id="copilotSubmitBtn">✦ Ask AI</button>
+                </div>
+
+                <!-- Change Preview Card (Hidden until query response) -->
+                <div id="copilotPreviewCard" class="settings-group-card" style="display:none; border-color:var(--primary); background:rgba(139,92,246,0.06);">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span id="copilotPreviewTitle" style="font-weight:700; font-size:12px; color:var(--text-primary);">Proposed Edit Changes</span>
+                        <span id="copilotImpactBadge" class="ai-score-badge" style="font-size:9px;">Safe Preview</span>
+                    </div>
+                    <div id="copilotPreviewMessage" style="font-size:11px; color:var(--text-secondary); margin:4px 0 8px 0;"></div>
+                    <ul id="copilotPreviewChangesList" style="font-size:11px; padding-left:16px; margin:0 0 10px 0; color:var(--text-primary); line-height:1.5;"></ul>
+                    <div style="display:flex; justify-content:flex-end; gap:6px;">
+                        <button class="btn btn-secondary btn-sm" id="copilotCancelChangeBtn">Cancel</button>
+                        <button class="btn btn-primary btn-sm" id="copilotApplyChangeBtn" style="background:#10B981; border-color:#10B981;">✓ Apply Changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Injection for static parser context sync -->
+    <div id="projectContextData" data-project='{% if project %}{{ project|tojson }}{% else %}null{% endif %}' data-file-param="{{ file_param or '' }}" hidden></div>
+
+    <script src="{{ url_for('static', filename='js/app_framework.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/editor.js') }}"></script>
+</body>
+</html>

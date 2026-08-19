@@ -839,7 +839,7 @@ export default function Editor() {
                         <button onClick={handleMergeSelected} className="btn-secondary flex-1 flex items-center justify-center gap-1 text-xs py-2" title="Merge with next">
                           <Merge className="w-3 h-3" /> Merge
                         </button>
-                        <button onClick={() => deleteCaption(selectedCaption.id)} className="px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-all">
+                        <button onClick={() => deleteCaption(selectedCaption.id)} className="px-3 py-2 rounded-xl bg-brand-primary/10 border border-brand-primary/20 text-brand-primary hover:bg-brand-primary/20 transition-all">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -1402,13 +1402,13 @@ function ExportModal({ onClose, projectId, videoFileName }: { onClose: () => voi
         )}
         {done && (
           <div className="space-y-3 text-center">
-            <p className="text-green-400 font-medium">Export complete!</p>
+            <p className="text-brand-accent font-medium">Export complete!</p>
             <button onClick={onClose} className="btn-primary w-full">Close</button>
           </div>
         )}
         {error && (
           <div className="space-y-3">
-            <p className="text-red-400 text-sm">{error}</p>
+            <p className="text-brand-primary text-sm">{error}</p>
             <button onClick={startExport} className="btn-primary w-full">Retry</button>
           </div>
         )}

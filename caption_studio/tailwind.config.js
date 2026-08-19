@@ -8,12 +8,13 @@ export default {
     extend: {
       colors: {
         brand: {
-          bg: "#0a0a0f",
-          surface: "rgba(255,255,255,0.06)",
-          border: "rgba(255,255,255,0.08)",
-          primary: "#7c3aed",
+          bg: "#08090D",
+          surface: "rgba(20,24,36,0.60)",
+          border: "rgba(255,255,255,0.06)",
+          primary: "#8B5CF6",
           accent: "#06b6d4",
           pink: "#ec4899",
+          muted: "#697080",
         }
       },
       backdropBlur: {

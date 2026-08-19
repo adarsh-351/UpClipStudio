@@ -407,7 +407,7 @@ export default function Settings() {
                     </button>
                     <button
                       onClick={() => handleDeleteTemplate(template.id)}
-                      className="btn-secondary text-xs py-1 text-red-400"
+                       className="btn-secondary text-xs py-1 text-brand-primary"
                       title="Delete"
                     >
                       Delete
@@ -420,7 +420,7 @@ export default function Settings() {
 
           {showDeleteConfirm && deletingTemplate && (
             <div className="mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
-              <p className="text-red-400 text-sm mb-2">
+              <p className="text-brand-primary text-sm mb-2">
                 Are you sure you want to delete "<strong>{deletingTemplate}</strong>"?
               </p>
               <div className="flex gap-2">

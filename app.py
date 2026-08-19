@@ -11,17 +11,35 @@ from pathlib import Path
 # (e.g. cv2). This makes `python app.py` work from any shell.
 # ---------------------------------------------------------------
 def _ensure_environment():
+    project_root = Path(__file__).resolve().parent
+    venv_python = project_root / ".venv" / "Scripts" / "python.exe"
+    current_python = Path(sys.executable).resolve()
+
+    # Already running with this project's .venv
     try:
-        import cv2  # noqa: F401
-        import flask  # noqa: F401
-        return  # all deps available in current interpreter
-    except Exception:
+        if current_python == venv_python.resolve():
+            return
+    except OSError:
         pass
 
-    venv_python = Path(__file__).resolve().parent / ".venv" / "Scripts" / "python.exe"
-    if venv_python.exists():
-        print(f"Re-launching with project interpreter: {venv_python}")
-        os.execv(str(venv_python), [str(venv_python)] + sys.argv)
+    # Project .venv exists → relaunch with it
+    if venv_python.is_file():
+        print(f"Using project interpreter: {venv_python}")
+
+        os.execv(
+            str(venv_python),
+            [
+                str(venv_python),
+                str(Path(__file__).resolve()),
+                *sys.argv[1:],
+            ],
+        )
+        # exec replaces the process; the following code is not reached
+        return
+
+    # .venv not found; continue with current interpreter
+    print("[Warning] .venv not found; running with current Python interpreter.")
+    # Continue without exiting
 
 
 _ensure_environment()
@@ -40,7 +58,10 @@ from ai.subtitle_renderer import SubtitleRenderer
 from ai.ass_builder import ASSBuilder
 
 from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
 
+# Initialize SQLAlchemy (DB will be created in data directory)
+db = SQLAlchemy()
 
 
 # ===================================================
@@ -290,24 +311,35 @@ def create_app():
     app.config["SECRET_KEY"] = config.SECRET_KEY
     app.config["SESSION_COOKIE_HTTPONLY"] = config.SESSION_COOKIE_HTTPONLY
     app.config["SESSION_COOKIE_SAMESITE"] = config.SESSION_COOKIE_SAMESITE
+    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{config.DATA_DIR / 'app.db'}"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    # Path to media root for MediaManager and thumbnail endpoint
+    app.config["MEDIA_ROOT"] = str(config.MEDIA_ROOT)
 
+    db.init_app(app)
+    with app.app_context():
+        db.create_all()
     from routes.home import home_bp
-    from routes.auth import auth_bp
     from routes.upload import upload_bp
     from routes.process import process_bp
     from routes.download import download_bp
     from routes.caption_studio import caption_studio_bp
     from routes.youtube import youtube_bp
     from routes.studio_navigation import studio_nav_bp
+    from routes.projects import projects_bp
+    from routes.editor import editor_bp
+    from routes.media_thumbnail import media_thumbnail_bp
+    app.register_blueprint(media_thumbnail_bp)
+    app.register_blueprint(editor_bp)
 
     app.register_blueprint(home_bp)
-    app.register_blueprint(auth_bp)
     app.register_blueprint(upload_bp)
     app.register_blueprint(process_bp)
     app.register_blueprint(download_bp)
     app.register_blueprint(caption_studio_bp)
     app.register_blueprint(youtube_bp)
     app.register_blueprint(studio_nav_bp)
+    app.register_blueprint(projects_bp)
 
     return app
 

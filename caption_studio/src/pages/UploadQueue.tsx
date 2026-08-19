@@ -112,7 +112,7 @@ export default function UploadQueue() {
     if (!error) return null;
     return (
       <span
-        className="inline-flex items-center rounded-full px-2 py-1 text-xs text-red-400 bg-red-500/10 border border-red-500/20"
+        className="inline-flex items-center rounded-full px-2 py-1 text-xs text-brand-primary bg-brand-primary/10 border border-brand-primary/20"
       >
         <AlertCircle className="w-3 h-3 mr-1" /> {error}
       </span>
@@ -338,9 +338,9 @@ export default function UploadQueue() {
               <Loader2 className="w-4 h-4 text-brand-accent" /> Retry All
             </button>
             <button
-              className="glass-panel p-3 rounded-lg border border-red-500/20 border-red-500/20 hover:bg-red-500/10 transition-colors"
+              className="glass-panel p-3 rounded-lg border border-brand-primary/20 hover:bg-brand-primary/10 transition-colors"
             >
-              <Trash2 className="w-4 h-4 text-red-400" /> Clear Queue
+              <Trash2 className="w-4 h-4 text-brand-primary" /> Clear Queue
             </button>
           </div>
         </div>

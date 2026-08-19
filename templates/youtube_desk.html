@@ -6,7 +6,7 @@
     <title>YouTube Desk | UpClip Studio</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&family=Montserrat:wght@700;800;900&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
     <style>
         /* ============================================
            YouTube Desk — Modern Glassmorphism
@@ -16,8 +16,8 @@
             --yt-red-dark: #cc0000;
             --yt-red-soft: rgba(255, 0, 0, 0.10);
             --yt-red-border: rgba(255, 0, 0, 0.30);
-            --glass-bg: rgba(26, 34, 51, 0.65);
-            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-bg: rgba(20, 24, 36, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.06);
             --sidebar-w: 260px;
         }
 
@@ -30,7 +30,7 @@
         .yt-desk-shell {
             display: flex;
             min-height: 100vh;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
         }
 
         /* =======================
@@ -38,7 +38,7 @@
         ======================= */
         .yt-sidebar {
             width: var(--sidebar-w);
-            background: rgba(10, 14, 23, 0.90);
+            background: rgba(8, 9, 13, 0.92);
             backdrop-filter: blur(20px);
             border-right: 1px solid var(--glass-border);
             display: flex;
@@ -885,7 +885,7 @@
             <div class="yt-sidebar-header">
                 <a href="/" style="text-decoration:none;color:inherit;">
                     <div class="yt-sidebar-brand">
-                        <div class="brand-icon">🎬</div>
+                        <div class="brand-icon"><svg data-lucide="clapperboard" width="28" height="28" style="color:var(--primary);"></svg></div>
                         <h2>UpClip Studio</h2>
                     </div>
                     <div class="yt-sidebar-sub">YouTube Desk</div>
@@ -894,17 +894,17 @@
             <nav class="yt-sidebar-nav">
                 <div class="yt-nav-section-title">Studio Modules</div>
                 <a href="/yt-downloader" class="yt-nav-item" data-module="yt_downloader" style="text-decoration:none;">
-                    <span class="nav-icon">📥</span> YouTube Downloader
+                     <span class="nav-icon"><svg data-lucide="download" width="36" height="36"></svg></span> YouTube Downloader
                 </a>
                 <a href="/dashboard" class="yt-nav-item" data-module="clip_cutter" style="text-decoration:none;">
-                    <span class="nav-icon">✂️</span> Clip Cutter
+                     <span class="nav-icon"><svg data-lucide="scissors" width="36" height="36"></svg></span> Clip Cutter
                 </a>
                 <a href="/caption-studio" class="yt-nav-item" data-module="caption_studio" style="text-decoration:none;">
-                    <span class="nav-icon">💬</span> Caption Studio
+                     <span class="nav-icon"><svg data-lucide="message-circle" width="36" height="36"></svg></span> Caption Studio
                 </a>
                 <div class="yt-nav-section-title">YouTube Desk</div>
                 <button class="yt-nav-item active" data-view="desk">
-                    <span class="nav-icon">📺</span> YouTube Desk
+                     <span class="nav-icon"><svg data-lucide="tv" width="36" height="36"></svg></span> YouTube Desk
                 </button>
                 <button class="yt-nav-item" data-view="connect">
                     <span class="nav-icon">🔗</span> Connect YouTube
@@ -933,7 +933,7 @@
         <main class="yt-main">
             <!-- Top Bar -->
             <div class="yt-topbar">
-                <h1><span class="yt-icon">📺</span> YouTube Desk</h1>
+                 <h1><span class="yt-icon"><svg data-lucide="tv" width="36" height="36"></svg></span> YouTube Desk</h1>
                 <div class="yt-topbar-actions">
                     <div class="yt-channel-badge" id="ytChannelBadge">
                         <img class="yt-channel-avatar" id="ytChannelAvatar" src="" alt="" hidden>
@@ -1044,7 +1044,7 @@
                             <div class="yt-section-title">Existing Videos</div>
                             <div id="ytExistingFiles">
                                 <div class="yt-empty">
-                                    <div class="yt-empty-icon">🎬</div>
+                                     <div class="yt-empty-icon"><svg data-lucide="clapperboard" width="28" height="28" style="color:var(--primary);"></svg></div>
                                     <h3>No videos found</h3>
                                     <p>Upload a video above or download one using the YT Downloader.</p>
                                 </div>
@@ -1329,5 +1329,7 @@
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/youtube-desk.js') }}"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>lucide.createIcons();</script>
 </body>
 </html>

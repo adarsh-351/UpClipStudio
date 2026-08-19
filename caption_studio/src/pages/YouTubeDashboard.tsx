@@ -22,6 +22,7 @@ import {
   Calendar,
   RefreshCw,
   XCircle,
+  CheckCircle2,
 } from "lucide-react";
 import { useStore } from "../store";
 import { glass, glassPanel, btnPrimary, btnSecondary, inputField } from "../index.css";
@@ -130,13 +131,13 @@ export default function YouTubeDashboard() {
           <div className="glass-panel rounded-2xl p-6 mb-6 border-white/10">
             <div className="flex items-center gap-3 mb-4">
               {connected ? (
-                <div className="p-3 rounded-xl bg-brand-primary/10 border border-brand-primary/40">
-                  <span className="text-xl">✓</span>
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-brand-primary/10 border border-brand-primary/40">
+                  <CheckCircle2 className="w-5 h-5 text-brand-accent" />
                   <span className="text-sm text-white/60">YouTube Connected</span>
                 </div>
               ) : (
-                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                  <span className="text-xl">✗</span>
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
+                  <XCircle className="w-5 h-5 text-brand-primary" />
                   <span className="text-sm text-white/40">Disconnected</span>
                 </div>
               )}
@@ -183,7 +184,7 @@ export default function YouTubeDashboard() {
           {/* Dashboard Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
             {/* Uploads Today card */}
-            <div className="glass-panelp-4">
+            <div className="glass-panel p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs text-white/50 uppercase tracking-wired">Uploads Today</p>
@@ -222,7 +223,7 @@ export default function YouTubeDashboard() {
                   <p className="text-xs text-white/50 uppercase tracking-wired">Failed</p>
                   <p className="text-2xl font-bold" id="failed-uploads">0</p>
                 </div>
-                <XCircle className="w-6 h-6 text-red-400" />
+                <XCircle className="w-6 h-6 text-brand-primary" />
               </div>
             </div>
 
@@ -233,7 +234,7 @@ export default function YouTubeDashboard() {
                   <p className="text-xs text-white/50 uppercase tracking-wired">Published</p>
                   <p className="text-2xl font-bold" id="published-videos">0</p>
                 </div>
-                <CheckCircle className="w-6 h-6 text-green-400" />
+                <CheckCircle className="w-6 h-6 text-brand-accent" />
               </div>
             </div>
           </div>

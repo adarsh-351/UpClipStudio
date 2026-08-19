@@ -272,7 +272,7 @@ export default function ConnectYouTube() {
     return (
       <div className="min-h-screen bg-brand-bg text-white p-6 max-w-md mx-auto">
         <div className="glass-panel p-6 rounded-2xl text-center border-red-500/20">
-          <XCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <XCircle className="w-12 h-12 text-brand-primary mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-4">Authentication Failed</h2>
           <p className="text-white/60 mb-6">{error || "Unknown error during OAuth flow"}</p>
           <button

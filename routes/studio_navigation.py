@@ -116,14 +116,14 @@ def open_in_caption_studio():
         return jsonify({"success": False, "error": "filename or project_id required"}), 400
 
     if not project_id:
-        all_projects = project_state._ProjectStateManager__dict__['_projects']
-        for pid, proj in all_projects.items():
-            if proj.source_video and proj.source_video.filename == filename:
-                project_id = pid
+        all_projects = project_state.list_all_projects()
+        for summary in all_projects:
+            if summary["source_video"] == filename:
+                project_id = summary["project_id"]
                 break
-            for clip in proj.clips:
-                if clip.filename == filename:
-                    project_id = pid
+            for clip_fn in summary["clips"]:
+                if clip_fn == filename:
+                    project_id = summary["project_id"]
                     break
             if project_id:
                 break
@@ -167,11 +167,11 @@ def send_to_youtube():
         return jsonify({"success": False, "error": "filename required"}), 400
 
     if not project_id:
-        all_projects = project_state._ProjectStateManager__dict__['_projects']
-        for pid, proj in all_projects.items():
-            for clip in proj.clips:
-                if clip.filename == filename:
-                    project_id = pid
+        all_projects = project_state.list_all_projects()
+        for summary in all_projects:
+            for clip_fn in summary["clips"]:
+                if clip_fn == filename:
+                    project_id = summary["project_id"]
                     break
             if project_id:
                 break

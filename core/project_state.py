@@ -46,22 +46,26 @@ class ProjectState:
     caption_files: List[MediaItem] = field(default_factory=list)
     final_exports: List[MediaItem] = field(default_factory=list)
     caption_style: Optional[CaptionStyleConfig] = None
+    caption_styles: List[Dict[str, Any]] = field(default_factory=list)
     current_module: str = "home"
-    navigation_history: List[Dict[str, str]] = field(default_factory=list)
+    navigation_history: List[Dict[str, Any]] = field(default_factory=list)
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
 
 
 class ProjectStateManager:
     _instance = None
     _lock = threading.Lock()
+    _projects: Dict[str, ProjectState] = {}
+    _projects_lock = threading.Lock()
+    _active_project_id: Optional[str] = None
 
     def __new__(cls):
         with cls._lock:
             if cls._instance is None:
                 cls._instance = super().__new__(cls)
-                cls._instance._projects: Dict[str, ProjectState] = {}
+                cls._instance._projects = {}
                 cls._instance._projects_lock = threading.Lock()
-                cls._instance._active_project_id: Optional[str] = None
+                cls._instance._active_project_id = None
             return cls._instance
 
     def create_project(self, source_filename: str, source_url: str = "") -> ProjectState:
@@ -143,7 +147,7 @@ class ProjectStateManager:
             return None
         return project.caption_style
 
-    def navigate_to(self, project_id: str, module: str, context: Dict[str, str] = None):
+    def navigate_to(self, project_id: str, module: str, context: Optional[Dict[str, Any]] = None):
         project = self.get_project(project_id)
         if not project:
             return
@@ -197,6 +201,28 @@ class ProjectStateManager:
                 del self._projects[project_id]
                 if self._active_project_id == project_id:
                     self._active_project_id = None
+
+    def list_all_projects(self) -> List[Dict[str, Any]]:
+        summaries = []
+        with self._projects_lock:
+            for pid, proj in self._projects.items():
+                summaries.append({
+                    "project_id": pid,
+                    "source_video": proj.source_video.filename if proj.source_video else None,
+                    "clips": [c.filename for c in proj.clips],
+                    "current_module": proj.current_module,
+                })
+        return summaries
+
+    def find_project_by_filename(self, filename: str) -> Optional[ProjectState]:
+        with self._projects_lock:
+            for pid, proj in self._projects.items():
+                if proj.source_video and proj.source_video.filename == filename:
+                    return proj
+                for clip in proj.clips:
+                    if clip.filename == filename:
+                        return proj
+        return None
 
 
 project_state = ProjectStateManager()

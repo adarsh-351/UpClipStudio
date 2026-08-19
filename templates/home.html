@@ -3,156 +3,209 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UpClip Studio — Download YouTube Videos & Create Viral Shorts</title>
+    <title>Home & Projects | UpClip Studio</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&family=Montserrat:wght@700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-<header class="navbar">
-        <div class="navbar-inner">
-            <div class="brand">
-                <a href="/" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:12px;">
-                    <div class="brand-icon">🎬</div>
-                    <div>
-                        <h1>UpClip Studio</h1>
-                        <p>Download • Clip • Grow</p>
-                    </div>
+    <div class="app-shell">
+        <!-- Top Bar -->
+        <header class="app-topbar">
+            <div class="topbar-left">
+                <a href="/" class="topbar-brand">
+                    <span class="brand-dot"></span>
+                    <span>UpClip Studio</span>
                 </a>
+                <div class="topbar-divider"></div>
+                <div class="topbar-workspace-title">
+                    <svg data-lucide="house" width="16" height="16" style="color:var(--primary);"></svg>
+                    <span>Home & Projects</span>
+                </div>
             </div>
-            <div class="nav-links">
-                <a href="{{ url_for('home.youtube_downloader') }}" class="nav-action">YT Downloader</a>
-                <a href="{{ url_for('caption_studio.caption_studio_page') }}" class="nav-action">Caption Studio</a>
-                <a href="{{ url_for('home.youtube_desk') }}" class="nav-action">YouTube Desk</a>
-                <a href="{{ url_for('home.guide') }}" class="nav-action">How to Use</a>
-                <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">🌙</button>
-                {% if current_user %}
-                    <div class="account-menu">
-                        <button class="account-btn" id="accountBtn">
-                            <span class="account-avatar">{{ current_user['username'][0]|upper }}</span>
-                            <span class="account-name">{{ current_user['username'] }}</span>
-                            <span class="account-caret">▾</span>
-                        </button>
-                        <div class="account-dropdown" id="accountDropdown" hidden>
-                            <div class="dropdown-header">
-                                <strong>{{ current_user['username'] }}</strong>
-                                <span>{{ current_user['email'] }}</span>
-                            </div>
-                            <a href="{{ url_for('home.dashboard') }}" class="dropdown-item">Dashboard</a>
-                            <button class="dropdown-item" id="logoutBtn">Sign Out</button>
+
+            <div class="topbar-center">
+                <button class="command-trigger" id="topbarCommandTrigger" data-tooltip="Quick Command Menu" data-hotkey="Ctrl+K">
+                    <div class="command-trigger-left">
+                        <svg data-lucide="search" width="14" height="14"></svg>
+                        <span>Search commands or switch workspace...</span>
+                    </div>
+                    <span class="kbd-badge">Ctrl + K</span>
+                </button>
+            </div>
+
+            <div class="topbar-right">
+                <button class="topbar-btn theme-toggle" id="themeToggle" aria-label="Toggle theme" data-tooltip="Toggle Dark/Light theme">🌙</button>
+                <a href="/dashboard" class="btn btn-primary btn-sm"><svg data-lucide="plus" width="14" height="14"></svg> New Project</a>
+            </div>
+        </header>
+
+        <div class="app-main">
+            <!-- Sidebar Navigation -->
+            <aside class="app-sidebar" id="appSidebar">
+                <div class="sidebar-header">
+                    <a href="/dashboard" class="sidebar-new-btn">
+                        <svg data-lucide="plus" width="16" height="16"></svg>
+                        <span>New Project</span>
+                    </a>
+                </div>
+
+                <nav class="sidebar-nav">
+                    <div class="nav-section-label">Workspaces</div>
+                    <a href="/" class="sidebar-item active" data-tooltip="Home & Projects">
+                        <div class="sidebar-icon"><svg data-lucide="house" width="18" height="18"></svg></div>
+                        <span class="sidebar-label">Home & Projects</span>
+                    </a>
+                    <a href="/dashboard" class="sidebar-item" data-tooltip="AI Clip Studio">
+                        <div class="sidebar-icon"><svg data-lucide="wand-sparkles" width="18" height="18"></svg></div>
+                        <span class="sidebar-label">AI Clip Studio</span>
+                    </a>
+                    <a href="/caption-studio" class="sidebar-item" data-tooltip="Caption Studio">
+                        <div class="sidebar-icon"><svg data-lucide="captions" width="18" height="18"></svg></div>
+                        <span class="sidebar-label">Caption Studio</span>
+                    </a>
+                    <a href="/studio" class="sidebar-item" data-tooltip="Studio Hub">
+                        <div class="sidebar-icon"><svg data-lucide="shapes" width="18" height="18"></svg></div>
+                        <span class="sidebar-label">Studio Hub</span>
+                    </a>
+                    <a href="/yt-downloader" class="sidebar-item" data-tooltip="YT Downloader">
+                        <div class="sidebar-icon"><svg data-lucide="download" width="18" height="18"></svg></div>
+                        <span class="sidebar-label">Downloader</span>
+                    </a>
+                    <a href="/youtube-desk" class="sidebar-item" data-tooltip="YouTube Automation">
+                        <div class="sidebar-icon"><svg data-lucide="tv" width="18" height="18"></svg></div>
+                        <span class="sidebar-label">YouTube Desk</span>
+                    </a>
+
+                    <div class="nav-section-label" style="margin-top: 12px;">Resources</div>
+                    <a href="/guide" class="sidebar-item" data-tooltip="User Guide">
+                        <div class="sidebar-icon"><svg data-lucide="book-open" width="18" height="18"></svg></div>
+                        <span class="sidebar-label">How to Use</span>
+                    </a>
+                </nav>
+
+                <div class="sidebar-footer">
+                    <button class="sidebar-toggle-btn" id="sidebarToggle" data-tooltip="Collapse / Expand Sidebar">
+                        <svg data-lucide="panel-left-close" width="18" height="18"></svg>
+                        <span class="sidebar-label">Collapse</span>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main Workspace -->
+            <main class="app-workspace">
+                <div class="workspace-content">
+                    <!-- Hero Banner -->
+                    <div class="card" style="background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface-1) 100%); padding: var(--space-8) var(--space-6); display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4);">
+                        <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: var(--radius-full); background: var(--primary-soft); border: 1px solid rgba(139,92,246,0.3); font-size: 11px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.05em;">
+                            <svg data-lucide="sparkles" width="12" height="12"></svg>
+                            <span>Desktop AI Video Suite</span>
+                        </div>
+                        <h1 style="font-family: var(--font-heading); font-size: 32px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.2;">
+                            Turn any long-form video into <span style="color: var(--primary);">viral shorts</span>
+                        </h1>
+                        <p style="color: var(--text-secondary); max-width: 640px; font-size: 14px; line-height: 1.6;">
+                            Automatic scene detection, speech transcription with Whisper, word-by-word animated captions, and multi-platform reframing — all processed locally.
+                        </p>
+                        <div style="display: flex; gap: var(--space-3); margin-top: var(--space-2); flex-wrap: wrap;">
+                            <a href="/dashboard" class="btn btn-primary"><svg data-lucide="wand-sparkles" width="16" height="16"></svg> Start Clipping</a>
+                            <a href="/caption-studio" class="btn btn-secondary"><svg data-lucide="captions" width="16" height="16"></svg> Caption Studio</a>
+                            <a href="/yt-downloader" class="btn btn-secondary"><svg data-lucide="download" width="16" height="16"></svg> Download from YouTube</a>
                         </div>
                     </div>
-                {% else %}
-                    <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-sm-nav">Sign In</a>
-                {% endif %}
-            </div>
-            <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+
+                    <!-- Quick Tools Grid -->
+                    <div>
+                        <h2 style="font-family: var(--font-heading); font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-4);">Quick Workspaces</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-4);">
+                            <div class="card" style="display: flex; flex-direction: column; gap: var(--space-2);">
+                                <div style="width: 36px; height: 36px; border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                                    <svg data-lucide="scissors" width="18" height="18"></svg>
+                                </div>
+                                <h3 style="font-size: 14px; font-weight: 700; margin-top: 4px;">Smart Scene Detection</h3>
+                                <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">Detect scene boundaries and isolate peak moments automatically.</p>
+                            </div>
+
+                            <div class="card" style="display: flex; flex-direction: column; gap: var(--space-2);">
+                                <div style="width: 36px; height: 36px; border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                                    <svg data-lucide="message-square" width="18" height="18"></svg>
+                                </div>
+                                <h3 style="font-size: 14px; font-weight: 700; margin-top: 4px;">Karaoke Subtitles</h3>
+                                <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">Word-level highlight synchronization rendered via FFmpeg libass.</p>
+                            </div>
+
+                            <div class="card" style="display: flex; flex-direction: column; gap: var(--space-2);">
+                                <div style="width: 36px; height: 36px; border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                                    <svg data-lucide="crop" width="18" height="18"></svg>
+                                </div>
+                                <h3 style="font-size: 14px; font-weight: 700; margin-top: 4px;">Smart 9:16 Reframing</h3>
+                                <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">Zero stretching aspect ratio crops tailored for Shorts and Reels.</p>
+                            </div>
+
+                            <div class="card" style="display: flex; flex-direction: column; gap: var(--space-2);">
+                                <div style="width: 36px; height: 36px; border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                                    <svg data-lucide="tv" width="18" height="18"></svg>
+                                </div>
+                                <h3 style="font-size: 14px; font-weight: 700; margin-top: 4px;">YouTube Automation</h3>
+                                <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">Direct channel publishing and scheduled video queues.</p>
+                            </div>
+                        </div>
+
+                        <!-- Template Center Showcase -->
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top: var(--space-6); margin-bottom: var(--space-3);">
+                            <h2 style="font-family: var(--font-heading); font-size: 18px; font-weight: 700; color: var(--text-primary);">Template Center</h2>
+                            <a href="/dashboard" style="font-size:12px; color:var(--primary); text-decoration:none; font-weight:600;">View All Templates →</a>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4);">
+                            <div class="card" style="display: flex; flex-direction: column; gap: var(--space-2); cursor:pointer;" onclick="window.location.href='/editor?file=AI_Spark_Clip_001_1080p%20(1).mp4'">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span style="font-size:20px;">🔥</span>
+                                    <span class="ai-score-badge" style="font-size:9px;">9:16 Shorts</span>
+                                </div>
+                                <h3 style="font-size: 13px; font-weight: 700;">Viral Short Hook</h3>
+                                <p style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">Bold pop captions, top AI pick badge, and music ducking.</p>
+                            </div>
+
+                            <div class="card" style="display: flex; flex-direction: column; gap: var(--space-2); cursor:pointer;" onclick="window.location.href='/editor?file=AI_Spark_Clip_001_1080p%20(1).mp4'">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span style="font-size:20px;">🎙</span>
+                                    <span class="ai-score-badge" style="font-size:9px;">9:16 Podcast</span>
+                                </div>
+                                <h3 style="font-size: 13px; font-weight: 700;">Podcast Highlights</h3>
+                                <p style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">Speaker lower third and subtle subtitle background box.</p>
+                            </div>
+
+                            <div class="card" style="display: flex; flex-direction: column; gap: var(--space-2); cursor:pointer;" onclick="window.location.href='/editor?file=AI_Spark_Clip_001_1080p%20(1).mp4'">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span style="font-size:20px;">💡</span>
+                                    <span class="ai-score-badge" style="font-size:9px;">9:16 Explainer</span>
+                                </div>
+                                <h3 style="font-size: 13px; font-weight: 700;">Educational Explainer</h3>
+                                <p style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">Callout boxes, key insight badges, and clean typography.</p>
+                            </div>
+
+                            <div class="card" style="display: flex; flex-direction: column; gap: var(--space-2); cursor:pointer;" onclick="window.location.href='/editor?file=AI_Spark_Clip_001_1080p%20(1).mp4'">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span style="font-size:20px;">✦</span>
+                                    <span class="ai-score-badge" style="font-size:9px;">9:16 Minimal</span>
+                                </div>
+                                <h3 style="font-size: 13px; font-weight: 700;">Minimalist Reel</h3>
+                                <p style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">Monochrome elegance with serif typography and audio fades.</p>
+                            </div>
+                        </div>
+
+                        <!-- Recent Projects -->
+                        <h2 style="font-family: var(--font-heading); font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-4); margin-top: var(--space-6);">Recent Projects</h2>
+                        <div id="projectsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4);"></div>
+                    </div>
+                </div>
+            </main>
         </div>
-        <!-- Mobile menu -->
-        <div class="mobile-menu" id="mobileMenu" hidden>
-            <a href="{{ url_for('home.youtube_downloader') }}" class="mobile-link">YT Downloader</a>
-            <a href="{{ url_for('caption_studio.caption_studio_page') }}" class="mobile-link">Caption Studio</a>
-            <a href="{{ url_for('home.youtube_desk') }}" class="mobile-link">YouTube Desk</a>
-            <a href="{{ url_for('home.guide') }}" class="mobile-link">How to Use</a>
-            {% if current_user %}
-                <div class="mobile-user">
-                    <span class="account-avatar">{{ current_user['username'][0]|upper }}</span>
-                    {{ current_user['username'] }}
-                </div>
-                <a href="{{ url_for('home.dashboard') }}" class="mobile-link">Dashboard</a>
-                <button class="mobile-link" id="logoutBtnMobile">Sign Out</button>
-            {% else %}
-                <a href="{{ url_for('auth.login') }}" class="mobile-link">Sign In</a>
-                <a href="{{ url_for('auth.register') }}" class="mobile-link">Create Account</a>
-            {% endif %}
-        </div>
-    </header>
+    </div>
 
-    <main>
-        <!-- Hero -->
-        <section class="home-hero">
-            <div class="home-hero-inner">
-                <span class="hero-badge">✨ AI-Powered Shorts Generator</span>
-                <h1>Turn any video into <span class="gradient">viral shorts</span> automatically</h1>
-                <p class="hero-lead">Upload a video. AI detects the best scenes, generates clips, adds subtitles, and renders professional shorts — all in one place.</p>
-                <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
-                    {% if current_user %}
-                        <a href="/studio" class="btn btn-primary btn-lg">🎬 Studio Hub →</a>
-                        <a href="{{ url_for('home.youtube_desk') }}" class="btn btn-secondary btn-lg">📺 YouTube Desk</a>
-                    {% else %}
-                        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">Get Started Free →</a>
-                    {% endif %}
-                    <a href="{{ url_for('caption_studio.caption_studio_page') }}" class="btn btn-secondary btn-lg">💬 Caption Studio</a>
-                </div>
-            </div>
-        </section>
-
-        <!-- Features -->
-        <section class="home-section" id="features">
-            <h2 class="section-title">Everything you need to create shorts</h2>
-            <p class="section-sub">A complete, professional toolkit for content creators.</p>
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">🎯</div>
-                    <h3>Smart Scene Detection</h3>
-                    <p>AI automatically finds the most engaging moments and splits them into perfect clips.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🧠</div>
-                    <h3>Human Motion Capture</h3>
-                    <p>Real motion tracking detects actual human movement — not just static frames.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">💬</div>
-                    <h3>Animated Captions</h3>
-                    <p>Auto-generated subtitles with editable text and timing, synchronized to your video.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🌐</div>
-                    <h3>Multi-Language</h3>
-                    <p>Transcribe and translate subtitles into 20+ languages automatically.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📐</div>
-                    <h3>Aspect Ratio Smart Crop</h3>
-                    <p>Export for Shorts, Reels, YouTube, or Square — with intelligent reframing, no stretching.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📦</div>
-                    <h3>Multiple Formats</h3>
-                    <p>Download clips in MP4, MOV, or WebM at your preferred quality — or grab everything as a ZIP.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- How it works -->
-        <section class="home-section alt" id="how">
-            <h2 class="section-title">How it works</h2>
-            <p class="section-sub">Three simple steps to go from video to viral.</p>
-            <div class="steps-row">
-                <div class="how-step">
-                    <div class="step-count">1</div>
-                    <h3>Upload</h3>
-                    <p>Drag and drop any video file.</p>
-                </div>
-                <div class="how-step">
-                    <div class="step-count">2</div>
-                    <h3>Configure</h3>
-                    <p>Choose language, aspect ratio, and clipping mode.</p>
-                </div>
-                <div class="how-step">
-                    <div class="step-count">3</div>
-                    <h3>Generate</h3>
-                    <p>AI processes everything and delivers ready-to-publish shorts.</p>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <footer class="footer">
-        <p>© 2026 UpClip Studio. Built for creators.</p>
-    </footer>
-
+    <script src="{{ url_for('static', filename='js/app_framework.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>lucide.createIcons();</script>
 </body>
 </html>

@@ -3,6 +3,7 @@
 # ==========================================================
 
 from pathlib import Path
+import shutil
 
 # ==========================================================
 # SECTION 2 : PROJECT ROOT
@@ -34,6 +35,9 @@ FRAMES_DIR = OUTPUT_DIR / "frames"
 THUMBNAIL_DIR = OUTPUT_DIR / "thumbnails"
 
 LOG_DIR = ROOT_DIR / "logs"
+
+# Directory that holds user-imported media files (videos, images, audio)
+MEDIA_ROOT = INPUT_DIR
 
 # ==========================================================
 # AUTH / DATA
@@ -188,7 +192,20 @@ DEFAULT_QUALITY = "original"
 # FFMPEG
 # ==========================================================
 
-FFMPEG_PATH = r"C:\Users\LENOVO\Downloads\image\image\.venv\bin\ffmpeg.exe"
+def _find_ffmpeg() -> str:
+    import platform
+    if shutil.which("ffmpeg"):
+        return "ffmpeg"
+    win_path = ROOT_DIR / "bin" / "ffmpeg.exe"
+    if win_path.exists():
+        return str(win_path)
+    linux_paths = ["/usr/bin/ffmpeg", "/usr/local/bin/ffmpeg"]
+    for p in linux_paths:
+        if Path(p).exists():
+            return p
+    return "ffmpeg"
+
+FFMPEG_PATH = _find_ffmpeg()
 
 # ==========================================================
 # SUBTITLE SETTINGS

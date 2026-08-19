@@ -144,7 +144,7 @@ export default function Landing() {
           </div>
 
           {error && (
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-4 text-center text-red-400 text-sm">
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-4 text-center text-brand-primary text-sm">
               {error}
             </motion.p>
           )}
